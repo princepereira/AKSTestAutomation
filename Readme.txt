@@ -1,2 +1,0 @@
-ServiceType : ETPCluster, ETPLocal
-Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngressIP, ExternalToIngressIP, NodeToRemoteNode, PodToLocalNode, PodToInternet, NodeToInternet

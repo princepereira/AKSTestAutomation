@@ -18,7 +18,22 @@ PS> .\starttest.ps1
 ServiceType : ETPCluster, ETPLocal
 ```
 ```
-Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngressIP, ExternalToIngressIP, NodeToRemoteNode, PodToLocalNode, PodToInternet
+Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngressIP, ExternalToIngressIP, NodeToRemoteNode, PodToLocalNode, PodToInternet, PingPodToLocalPod, PingPodToRemotePod, PingPodToLocalNode, PingPodToRemoteNode, PingPodToInternet
+```
+```
+RemoteAddress : Deafult: bing.com [Only for Ping to internet]
+```
+```
+#### Planned
+StartClient : Foreground/Background
+```
+```
+#### Planned
+Actions : [ { "ScaleTo" : 2}, { "StartClient" : "Foreground/Background"}, { "ReadinessProbe" : true/false } ]
+```
+```
+#### Planned
+ExpectedResult : ""
 ```
 
 #### Sample testconf.json file
@@ -68,6 +83,35 @@ Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngres
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
             "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "[IPV4] Basic Pod to Service using Cluster IP",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 2,
+            "TimeBtwEachRequestInMs" : 100,
+            "Actions" : [
+                { "ScaleTo" : 2},
+                { "ReadinessProbe" : false },
+                { "StartClient" : "Background"},
+                { "ScaleTo" : 4},
+                { "ReadinessProbe" : true },
+            ],
+            ExpectedResult : "",
+            "Skip" : false
+        },
+        {
+            "Name" : "[IPV4] Basic Ping Pod to Remote Node using Node IP",
+            "Type" : "PingPodToRemoteNode",
+            "Skip" : false
+        },
+        {
+            "Name" : "[IPV4] Basic Ping Pod to Internet using bing.com",
+            "Type" : "PingPodToInternet",
+            "RemoteAddress" : "abc.com", 
             "Skip" : false
         },
         {

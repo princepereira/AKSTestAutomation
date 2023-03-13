@@ -230,9 +230,9 @@ function LogResult {
         [Parameter (Mandatory = $true)] [String]$actualResult
     )
     if($actualResult.Contains($expectedResult)) {
-        $result = "Testcase $index : $testcaseName - PASSED"
+        $result = "[PASSED] Testcase $index : [$testcaseName] - Result: $actualResult"
     } else {
-        $result = "Testcase $index : $testcaseName - FAILED . Remarks : $actualResult"
+        $result = "[FAILED] Testcase $index : [$testcaseName] - Result: $actualResult"
     }
     Log $result
     Add-content $logPath -value $result
@@ -246,9 +246,9 @@ function LogPingResult {
         [Parameter (Mandatory = $true)] [String]$result
     )
     if($result.Contains("True")) {
-        $result = "Testcase $index : $testcaseName - PASSED"
+        $result = "[PASSED] Testcase $index : [$testcaseName] - Result: $result"
     } else {
-        $result = "Testcase $index : $testcaseName - FAILED . Remarks : $result"
+        $result = "[FAILED] Testcase $index : [$testcaseName] - Result: $result"
     }
     Log $result
     Add-content $logPath -value $result

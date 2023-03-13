@@ -26,6 +26,11 @@ function RunTestcase {
         "PodToLocalNode" { TestPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index }
         "PodToRemoteNode" { TestPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index }
         "PodToInternet" { TestPodToInternet -testcase $testcase -appInfo $appInfo -index $index }
+        "PingPodToLocalPod" { TestPingPodToLocalPod -testcase $testcase -appInfo $appInfo -index $index }
+        "PingPodToRemotePod" { TestPingPodToRemotePod -testcase $testcase -appInfo $appInfo -index $index }
+        "PingPodToLocalNode" { TestPingPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index }
+        "PingPodToRemoteNode" { TestPingPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index }
+        "PingPodToInternet" { TestPingPodToInternet -testcase $testcase -appInfo $appInfo -index $index }
         default {"No Match Found"}
     }
     Log "Testcase $index Execution Completed. [Testcase : $tcaseName]"

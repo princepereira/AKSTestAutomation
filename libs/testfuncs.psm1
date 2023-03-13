@@ -206,6 +206,56 @@ function TestPodToLocalPod {
     LogResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
+function TestPingPodToLocalPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    MakeEnoughPodsForPodToPodTesting -appInfo $appInfo
+    $useIPV6 = $false
+    if($testcase.UseIPV6) {
+        $useIPV6 = $true
+    }
+    $localPodIP = GetLocalServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    Log "Start Ping Test to $localPodIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping -6 $localPodIP
+    } else {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping $localPodIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localPodIP is Success : $pingTestSuccess."
+    LogPingResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -result $pingTestMessage
+}
+
+function TestPingPodToRemotePod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    MakeEnoughPodsForPodToPodTesting -appInfo $appInfo
+    $useIPV6 = $false
+    if($testcase.UseIPV6) {
+        $useIPV6 = $true
+    }
+    $remotePodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    Log "Start Ping Test to $remotePodIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping -6 $remotePodIP
+    } else {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping $remotePodIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $remotePodIP is Success : $pingTestSuccess."
+    LogPingResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -result $pingTestMessage
+}
+
 function TestPodToLocalNode {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
@@ -224,6 +274,32 @@ function TestPodToLocalNode {
     $tcaseName = $testcase.Name
     $tcaseName = "$tcaseName [LocalNodeIP:$localNodeIP]"
     LogPingResult -logPath $appInfo.LogPath -testcaseName $tcaseName -index $index -result $result
+}
+
+function TestPingPodToLocalNode {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $useIPV6 = $false
+    if($testcase.UseIPV6) {
+        $useIPV6 = $true
+    }
+    $localNodeIP = GetLocalNodeIP -nodeName $nodeName -useIPV6 $useIPV6
+
+    Log "Start Ping Test to $localNodeIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping -6 $localNodeIP
+    } else {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping $localNodeIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localNodeIP is Success : $pingTestSuccess."
+    LogPingResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -result $pingTestMessage
 }
 
 function TestPodToRemoteNode {
@@ -246,6 +322,32 @@ function TestPodToRemoteNode {
     LogPingResult -logPath $appInfo.LogPath -testcaseName $tcaseName -index $index -result $result
 }
 
+function TestPingPodToRemoteNode {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $useIPV6 = $false
+    if($testcase.UseIPV6) {
+        $useIPV6 = $true
+    }
+    $remoteNodeIP = GetRemoteNodeIP -nodeName $nodeName -useIPV6 $useIPV6
+
+    Log "Start Ping Test to $remoteNodeIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping -6 $remoteNodeIP
+    } else {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping $remoteNodeIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localNodeIP is Success : $pingTestSuccess."
+    LogPingResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -result $pingTestMessage
+}
+
 function TestPodToInternet {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
@@ -257,6 +359,35 @@ function TestPodToInternet {
     $result = kubectl exec $clientName -n $appInfo.Namespace -- powershell -ExecutionPolicy Unrestricted -command Test-NetConnection -p 80 | findstr "Succeeded"
     $tcaseName = $testcase.Name
     LogPingResult -logPath $appInfo.LogPath -testcaseName $tcaseName -index $index -result $result
+}
+
+function TestPingPodToInternet {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $useIPV6 = $false
+    if($testcase.UseIPV6) {
+        $useIPV6 = $true
+    }
+
+    $remoteAddr = "bing.com"
+    if($testcase.RemoteAddress -ne "") {
+        $remoteAddr = $testcase.RemoteAddress
+    }
+
+    Log "Start Ping Test to $remoteAddr"
+    if($useIPV6) {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping -6 $remoteAddr
+    } else {
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- ping $remoteAddr
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localNodeIP is Success : $pingTestSuccess."
+    LogPingResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -result $pingTestMessage
 }
 
 function TestPodToRemotePod {
@@ -271,10 +402,10 @@ function TestPodToRemotePod {
     if($testcase.UseIPV6) {
         $useIPV6 = $true
     }
-    $localPodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $remotePodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
     $internalPort = $appInfo.InternalPort
     Log "Start TCP Connection"
-    $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $localPodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $remotePodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     LogResult -logPath $appInfo.LogPath -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
