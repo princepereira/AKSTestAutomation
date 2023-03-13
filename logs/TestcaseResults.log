@@ -1,0 +1,10 @@
+Testcase 1 : [IPV4] Basic Pod to Service using Cluster IP - PASSED
+Testcase 2 : [IPV4] Basic Pod to Local Pod using Pod IP - PASSED
+Testcase 3 : [IPV4] Basic Pod to Remote Pod using Pod IP - PASSED
+Testcase 4 [10.224.0.33 :30212] : [IPV4] Basic Pod to Service using NodePort - PASSED
+Testcase 4 [10.224.0.64 :30212] : [IPV4] Basic Pod to Service using NodePort - PASSED
+Testcase 5 : [IPV4] Basic Pod to Service using IngressIP - PASSED
+Testcase 6 : [IPV4] Basic External to Service using IngressIP - FAILED . Remarks : #======= ConnectionsSucceded:0, ConnectionsFailed:2 , Iteration:1 
+Testcase 7 : [IPV4] Basic Pod to Local node [LocalNodeIP:10.224.0.64] - PASSED
+Testcase 8 : [IPV4] Basic Pod to Remote node [RemoteNodeIP:10.224.0.33] - PASSED
+Testcase 9 : [IPV4] Basic Pod to Internet - PASSED

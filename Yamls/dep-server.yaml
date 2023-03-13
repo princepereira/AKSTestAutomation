@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    skip-clusterip-loadbalancer: "true"
+    deployment.kubernetes.io/revision: "2"
+  labels:
+    app: tcp-server
+  name: tcp-server
+  namespace: demo
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 4
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: tcp-server
+      network: conntest
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: tcp-server
+        network: conntest
+    spec:
+      containers:
+      - image: princepereira/tcp-client-server:WS2022
+        command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
+        imagePullPolicy: Always
+        name: tcpudpserver
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 1000
+      nodeSelector:
+        kubernetes.io/os: windows
