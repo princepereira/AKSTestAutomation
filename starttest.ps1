@@ -3,6 +3,21 @@ Import-Module -Force .\libs\clusterfuncs.psm1
 Import-Module -Force .\libs\testfuncs.psm1
 Import-Module -Force .\libs\utils.psm1
 
+$TypePodToClusterIP = "PodToClusterIP"
+$TypePodToLocalPod = "PodToLocalPod"
+$TypePodToRemotePod = "PodToRemotePod"
+$TypePodToNodePort = "PodToNodePort"
+$TypePodToIngressIP = "PodToIngressIP"
+$TypeExternalToIngressIP = "ExternalToIngressIP"
+$TypePodToLocalNode = "PodToLocalNode"
+$TypePodToRemoteNode = "PodToRemoteNode"
+$TypePodToInternet = "PodToInternet"
+$TypePingPodToLocalPod = "PingPodToLocalPod"
+$TypePingPodToRemotePod = "PingPodToRemotePod"
+$TypePingPodToLocalNode = "PingPodToLocalNode"
+$TypePingPodToRemoteNode = "PingPodToRemoteNode"
+$TypePingPodToInternet = "PingPodToInternet"
+
 $testConf = Get-Content .\testconf.json | ConvertFrom-Json
 $clusterInfo = ($testConf).ClusterInfo
 $appInfo = ($testConf).AppInfo
@@ -16,6 +31,11 @@ function RunTestcase {
         [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false,
         [Parameter (Mandatory = $true)] [Int32]$index
     )
+
+    if(IsActionUnSupported -testcase $testcase -logPath $appInfo.LogPath) {
+        return $false
+    }
+
     $ipVersion = "IPV4"
     if($useIPV6) {
         $ipVersion = "IPV6"
@@ -23,20 +43,20 @@ function RunTestcase {
     $tcaseName = $testcase.Name
     Log "Testcase $index Execution Started. [$ipVersion][Testcase : $tcaseName]"
     switch($testcase.Type) {
-        "PodToClusterIP" { TestPodToClusterIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToLocalPod" { TestPodToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToRemotePod" { TestPodToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToNodePort" { TestPodToNodePort -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToIngressIP" { TestPodToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "ExternalToIngressIP" { TestExternalToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToLocalNode" { TestPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToRemoteNode" { TestPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PodToInternet" { TestPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PingPodToLocalPod" { TestPingPodToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PingPodToRemotePod" { TestPingPodToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PingPodToLocalNode" { TestPingPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PingPodToRemoteNode" { TestPingPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
-        "PingPodToInternet" { TestPingPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToClusterIP { TestPodToClusterIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToLocalPod { TestPodToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToRemotePod { TestPodToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToNodePort { TestPodToNodePort -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToIngressIP { TestPodToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeExternalToIngressIP { TestExternalToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToLocalNode { TestPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToRemoteNode { TestPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePodToInternet { TestPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingPodToLocalPod { TestPingPodToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingPodToRemotePod { TestPingPodToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingPodToLocalNode { TestPingPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingPodToRemoteNode { TestPingPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingPodToInternet { TestPingPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         default {"No Match Found"}
     }
     Log "Testcase $index Execution Completed. [$ipVersion][Testcase : $tcaseName]"

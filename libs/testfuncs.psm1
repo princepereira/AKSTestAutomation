@@ -1,5 +1,11 @@
 Import-Module -Force .\libs\utils.psm1
 
+$ActionScaleTo = "ScaleTo"
+$ActionSleep = "Sleep"
+$ActionDeleteServerPods = "DeleteServerPods"
+$ActionFailReadinessProbe = "FailReadinessProbe"
+$ActionPassReadinessProbe = "PassReadinessProbe"
+
 function TestPodToClusterIP {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
@@ -14,7 +20,6 @@ function TestPodToClusterIP {
 
     Log "Pods"
     kubectl get pods -o wide -n $appInfo.Namespace
-    Log "Start TCP Connection"
 
     $serviceName = $appInfo.ETPClusterServiceName
     $servicePort = $appInfo.ETPClusterServicePort
@@ -34,7 +39,15 @@ function TestPodToClusterIP {
     
     $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
     $clusterIP = GetClusterIP -namespace $appInfo.Namespace -serviceName $serviceName
-    $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+
+    if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
+        Log "Start TCP Connection to $clusterIP : $servicePort in background"
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6
+    } else {
+        Log "Start TCP Connection to $clusterIP : $servicePort "
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    }
+    
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
@@ -94,7 +107,6 @@ function TestPodToIngressIP {
 
     Log "Pods"
     kubectl get pods -o wide -n $appInfo.Namespace
-    Log "Start TCP Connection"
 
     $serviceName = $appInfo.ETPClusterServiceName
     $servicePort = $appInfo.ETPClusterServicePort
@@ -114,7 +126,15 @@ function TestPodToIngressIP {
 
     $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
     $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
-    $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+
+    if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
+        Log "Start TCP Connection to $ingressIP : $servicePort in background"
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6
+    } else {
+        Log "Start TCP Connection to $ingressIP : $servicePort "
+        $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    }
+
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
@@ -134,7 +154,6 @@ function TestExternalToIngressIP {
 
     Log "Pods"
     kubectl get pods -o wide -n $appInfo.Namespace
-    Log "Start TCP Connection"
 
     $serviceName = $appInfo.ETPClusterServiceName
     $servicePort = $appInfo.ETPClusterServicePort
@@ -153,6 +172,15 @@ function TestExternalToIngressIP {
     }
 
     $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
+
+    if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
+        Log "Start TCP Connection to $ingressIP : $servicePort in background"
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -extClient $true
+    } else {
+        Log "Start TCP Connection to $ingressIP : $servicePort "
+        $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    }
+
     $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
@@ -357,4 +385,46 @@ function TestPodToRemotePod {
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
+function RunActions {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [string]$clientName,
+        [Parameter (Mandatory = $true)] [string]$ipAddress,
+        [Parameter (Mandatory = $true)] [string]$servicePort,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $false)] [bool]$extClient = $false
+    )
+
+
+    $namespace = $appInfo.Namespace
+    $connCount = $testcase.ConnectionCount
+    $requestsPerConnection = $testcase.RequestsPerConnection
+    $timeBtwEachRequestInMs = $testcase.TimeBtwEachRequestInMs
+
+    if($extClient) {
+        $Job = Start-Job -ScriptBlock { bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+    } else {
+        $Job = Start-Job -ScriptBlock { kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+    }
+    
+
+    foreach($action in $testcase.Actions) {
+
+        if($action.$ActionScaleTo) { ScalePodsInBackground -namespace $appInfo.Namespace -deploymentName $appInfo.ServerDeploymentName -podCount $action.$ActionScaleTo }
+
+        if($action.$ActionSleep) {Start-Sleep -Seconds $action.$ActionSleep }
+
+        if($action.$ActionFailReadinessProbe) { FailReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6 }
+
+        if($action.$ActionPassReadinessProbe) { PassReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6 }
+
+    }
+
+    Wait-Job $Job
+    $result = Receive-Job $Job
+    $resultStr = $result | findstr "ConnectionsSucceded"
+    return $resultStr
 }

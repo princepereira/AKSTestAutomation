@@ -1,5 +1,13 @@
 $Global:nodePoolName = "npwin"
 
+
+$Global:ActionsSupportedTypes = @{
+    "PodToClusterIP" = $true
+    "PodToIngressIP" = $true
+    "ExternalToIngressIP" = $true
+}
+
+
 function Log {
     param (
         [Parameter (Mandatory = $true)] [String]$logMsg
@@ -201,6 +209,26 @@ function GetRemoteServerPodIP {
     return ""
 }
 
+function GetAllServerPodIPs {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$serverDeploymentName,
+        [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
+    )
+    $podIPs = @()
+    $items = ((kubectl get pods -n $namespace -o json | ConvertFrom-Json).Items)
+    foreach($item in $items) {
+        if(($item.spec).nodeName -eq $nodeName -and ((($item.metadata).labels).app -eq $serverDeploymentName)) {
+            if($useIPV6) {
+                $podIPs += $item.status.podIPs[1].ip
+            } else {
+                $podIPs += ($item.status).podIP
+            } 
+        }
+    }
+    return $podIPs
+}
+
 function GetClusterIP {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
@@ -261,6 +289,17 @@ function MakeEnoughPodsForPodToPodTesting {
         Log "Containers didn't come up."
         return $false
     }
+    return $true
+}
+
+function ScalePodsInBackground {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$deploymentName,
+        [Parameter (Mandatory = $true)] [Int32]$podCount
+    )
+    Log "Scaling the server pods to $podCount"
+    kubectl scale --replicas=$podCount deployment/$deploymentName -n $namespace
     return $true
 }
 
@@ -325,6 +364,69 @@ function WaitForServicesToBeReady {
         }
         Log "Waiting for Services to be Ready. Pending Services : $pendingServices"
         Start-Sleep -Seconds 5
+    }
+    return $false
+}
+
+function FailReadinessProbeForAllServerPods {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$clientDeploymentName,
+        [Parameter (Mandatory = $true)] [String]$serverDeploymentName,
+        [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
+    )
+
+    Log "Failing readiness probe for all server pods started."
+    $serverPodIPs = GetAllServerPodIPs -namespace $namespace -serverDeploymentName $serverDeploymentName -useIPV6 $useIPV6
+    $clientName = GetClientName -namespace $namespace -deploymentName $clientDeploymentName
+    foreach($podIP in $serverPodIPs) {
+        $apiReq = "curl $podIP:8090/failreadinessprobe"
+        if($useIPV6) {
+            $apiReq = "curl [$podIP]:8090/failreadinessprobe"
+        }
+        $result = kubectl exec $clientName -n $namespacee -- $apiReq
+        Log "FailReadiness Probe for $podIP status : $result"
+    }
+    Log "Failing readiness probe for all server pods completed."
+}
+
+function PassReadinessProbeForAllServerPods {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$clientDeploymentName,
+        [Parameter (Mandatory = $true)] [String]$serverDeploymentName,
+        [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
+    )
+
+    Log "Passing readiness probe for all server pods started."
+    $serverPodIPs = GetAllServerPodIPs -namespace $namespace -serverDeploymentName $serverDeploymentName -useIPV6 $useIPV6
+    $clientName = GetClientName -namespace $namespace -deploymentName $clientDeploymentName
+    foreach($podIP in $serverPodIPs) {
+        $apiReq = "curl $podIP:8090/passreadinessprobe"
+        if($useIPV6) {
+            $apiReq = "curl [$podIP]:8090/passreadinessprobe"
+        }
+        $result = kubectl exec $clientName -n $namespacee -- $apiReq
+        Log "PassReadiness Probe for $podIP status : $result"
+    }
+    Log "Passing readiness probe for all server pods completed."
+}
+
+function IsActionUnSupported {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [string]$logPath
+    )
+    if($Global:ActionsSupportedTypes[$testcase.Type]) {
+        return $false
+    }
+    if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
+        $tcaseType = $testcase.Type
+        $tcaseName = $testcase.Name
+        $result = "[SKIPPED][$tcaseName] Reason : Actions not supported for $tcaseType"
+        Log $result
+        Add-content $logPath -value $result
+        return $true
     }
     return $false
 }

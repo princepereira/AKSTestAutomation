@@ -41,8 +41,9 @@
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
-            "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "ScaleTo" : 6 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "ScaleTo" : 3 } ],
             "Skip" : false
         },
         {
