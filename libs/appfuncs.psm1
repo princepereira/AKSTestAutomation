@@ -6,11 +6,10 @@ function InstallApps {
     )
     Log "App Install Started."
     $namespace = $appInfo.Namespace
-    $serviceCount = $appInfo.ServiceCount
     kubectl create namespace $namespace
 
     if($appInfo.InstallIPv4Required) {
-        kubectl create -f .\Yamls
+        kubectl create -f .\Yamls\IPV4
     }
 
     if($appInfo.InstallIPv6Required) {
@@ -24,7 +23,7 @@ function InstallApps {
     }
     Log "Pods"
     kubectl get pods -o wide -n $namespace
-    if(!(WaitForServicesToBeReady -namespace $namespace -serviceCount $serviceCount)) {
+    if(!(WaitForServicesToBeReady -namespace $namespace)) {
         Log "Services didn't come up."
         return $false
     }

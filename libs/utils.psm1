@@ -8,6 +8,49 @@ function Log {
     Write-Host "#========= $logMsg "
 }
 
+function LogResult {
+    param (
+        [Parameter (Mandatory = $true)] [String]$logPath,
+        [Parameter (Mandatory = $true)] [String]$testcaseName,
+        [Parameter (Mandatory = $true)] [String]$index,
+        [Parameter (Mandatory = $true)] [System.Boolean]$useIPV6,
+        [Parameter (Mandatory = $true)] [String]$expectedResult,
+        [Parameter (Mandatory = $true)] [String]$actualResult
+    )
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+    }
+    if($actualResult.Contains($expectedResult)) {
+        $result = "[PASSED] Testcase $index : [$ipVersion][$testcaseName] - Result: $actualResult"
+    } else {
+        $result = "[FAILED] Testcase $index : [$ipVersion][$testcaseName] - Result: $actualResult"
+    }
+    Log $result
+    Add-content $logPath -value $result
+}
+
+function LogPingResult {
+    param (
+        [Parameter (Mandatory = $true)] [String]$logPath,
+        [Parameter (Mandatory = $true)] [String]$testcaseName,
+        [Parameter (Mandatory = $true)] [String]$index,
+        [Parameter (Mandatory = $true)] [System.Boolean]$useIPV6,
+        [Parameter (Mandatory = $true)] [String]$result
+    )
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+    }
+    if($result.Contains("True")) {
+        $result = "[PASSED] Testcase $index : [$ipVersion][$testcaseName] - Result: $result"
+    } else {
+        $result = "[FAILED] Testcase $index : [$ipVersion][$testcaseName] - Result: $result"
+    }
+    Log $result
+    Add-content $logPath -value $result
+}
+
 function GetClientName {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
@@ -221,37 +264,28 @@ function MakeEnoughPodsForPodToPodTesting {
     return $true
 }
 
-function LogResult {
+function ScalePods {
     param (
-        [Parameter (Mandatory = $true)] [String]$logPath,
-        [Parameter (Mandatory = $true)] [String]$testcaseName,
-        [Parameter (Mandatory = $true)] [String]$index,
-        [Parameter (Mandatory = $true)] [String]$expectedResult,
-        [Parameter (Mandatory = $true)] [String]$actualResult
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [Int32]$index
     )
-    if($actualResult.Contains($expectedResult)) {
-        $result = "[PASSED] Testcase $index : [$testcaseName] - Result: $actualResult"
-    } else {
-        $result = "[FAILED] Testcase $index : [$testcaseName] - Result: $actualResult"
+    if(!($testcase.ServerPodCount)) {
+        return $true
     }
-    Log $result
-    Add-content $logPath -value $result
-}
-
-function LogPingResult {
-    param (
-        [Parameter (Mandatory = $true)] [String]$logPath,
-        [Parameter (Mandatory = $true)] [String]$testcaseName,
-        [Parameter (Mandatory = $true)] [String]$index,
-        [Parameter (Mandatory = $true)] [String]$result
-    )
-    if($result.Contains("True")) {
-        $result = "[PASSED] Testcase $index : [$testcaseName] - Result: $result"
-    } else {
-        $result = "[FAILED] Testcase $index : [$testcaseName] - Result: $result"
+    $tcaseName = $testcase.Name
+    $depName = $appInfo.ServerDeploymentName
+    $serverPodCount = $testcase.ServerPodCount
+    Log "Scaling the server pods to $serverPodCount"
+    kubectl scale --replicas=$serverPodCount deployment/$depName -n $appInfo.Namespace
+    if(!(WaitForPodsToBeReady -namespace $appInfo.Namespace)) {
+        Log "Containers didn't come up."
+        $result = "Testcase $index : $tcaseName - FAILED . Remarks : Pods didn't come up."
+        Log $result
+        Add-content $logPath -value $result
+        return $false
     }
-    Log $result
-    Add-content $logPath -value $result
+    return $true
 }
 
 function WaitForPodsToBeReady {
@@ -273,32 +307,24 @@ function WaitForPodsToBeReady {
             return $true
         }
         Log "Waiting for Pods to be Ready"
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
     }
     return $false
 }
 
 function WaitForServicesToBeReady {
     param (
-        [Parameter (Mandatory = $true)] [String]$namespace,
-        [Parameter (Mandatory = $true)] [Int32]$serviceCount
+        [Parameter (Mandatory = $true)] [String]$namespace
     )
     return $true
     $count = 200
     while ($count--) {
-        $allReady = $true
-        $ipList = ((((($svcJson).items).status).loadBalancer).ingress).ip
-        foreach($ip in $ipList) {
-            if($ip -eq "") {
-                $allReady = $false
-                break
-            }
-        }
-        if($allReady -and ($ipList.Count -eq $serviceCount)) {
+        $pendingServices = kubectl get services -n $namespace | findstr "pending"
+        if($pendingServices.Count -eq 0) {
             return $true
         }
-        Log "Waiting for Service to be Ready"
-        Start-Sleep -Seconds 3
+        Log "Waiting for Services to be Ready. Pending Services : $pendingServices"
+        Start-Sleep -Seconds 5
     }
     return $false
 }

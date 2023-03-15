@@ -1,5 +1,1 @@
-[PASSED] Testcase 3 : [[IPV4] Basic Ping Pod to Local Pod using Pod IP] - Result: Ping from tcp-client-6b8db9f4b5-g7w55 to 10.224.0.91 is Success : True.
-[PASSED] Testcase 4 : [[IPV4] Basic Ping Pod to Remote Pod using Pod IP] - Result: Ping from tcp-client-6b8db9f4b5-g7w55 to 10.224.0.60 is Success : True.
-[PASSED] Testcase 5 : [[IPV4] Basic Ping Pod to Local Node using Node IP] - Result: Ping from tcp-client-6b8db9f4b5-g7w55 to 10.224.0.64 is Success : True.
-[PASSED] Testcase 6 : [[IPV4] Basic Ping Pod to Remote Node using Node IP] - Result: Ping from tcp-client-6b8db9f4b5-g7w55 to  is Success : True.
-[FAILED] Testcase 7 : [[IPV4] Basic Ping Pod to Internet using bing.com] - Result: Ping from tcp-client-6b8db9f4b5-g7w55 to  is Success : False.
+[PASSED] Testcase 1 : [IPV4][Basic Pod to Service using Cluster IP] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:0 , Iteration:1 

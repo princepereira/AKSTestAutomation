@@ -15,7 +15,6 @@ spec:
   selector:
     matchLabels:
       app: tcp-client
-      network: conntest
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -26,7 +25,6 @@ spec:
       creationTimestamp: null
       labels:
         app: tcp-client
-        network: conntest
     spec:
       containers:
       - image: princepereira/tcp-client-server:WS2022

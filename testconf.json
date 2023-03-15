@@ -34,9 +34,9 @@
     "SkipAllTestcases" : false,
     "SkipIPV4": true,
     "SkipIPV6": false,
-    "Testcases" : [
+    "IPV4Testcases" : [
         {
-            "Name" : "[IPV4] Basic Pod to Service using Cluster IP",
+            "Name" : "Basic Pod to Service using Cluster IP",
             "Type" : "PodToClusterIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
@@ -46,7 +46,7 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Local Pod using Pod IP",
+            "Name" : "Basic Pod to Local Pod using Pod IP",
             "Type" : "PodToLocalPod",
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
@@ -54,33 +54,33 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Ping Pod to Local Pod using Pod IP",
+            "Name" : "Basic Ping Pod to Local Pod using Pod IP",
             "Type" : "PingPodToLocalPod",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Ping Pod to Remote Pod using Pod IP",
+            "Name" : "Basic Ping Pod to Remote Pod using Pod IP",
             "Type" : "PingPodToRemotePod",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Ping Pod to Local Node using Node IP",
+            "Name" : "Basic Ping Pod to Local Node using Node IP",
             "Type" : "PingPodToLocalNode",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Ping Pod to Remote Node using Node IP",
+            "Name" : "Basic Ping Pod to Remote Node using Node IP",
             "Type" : "PingPodToRemoteNode",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Ping Pod to Internet using bing.com",
+            "Name" : "Basic Ping Pod to Internet using bing.com",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com", 
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Remote Pod using Pod IP",
+            "Name" : "Basic Pod to Remote Pod using Pod IP",
             "Type" : "PodToRemotePod",
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
@@ -88,7 +88,7 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Service using NodePort",
+            "Name" : "Basic Pod to Service using NodePort",
             "Type" : "PodToNodePort",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -98,7 +98,7 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Service using IngressIP",
+            "Name" : "Basic Pod to Service using IngressIP",
             "Type" : "PodToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -108,7 +108,7 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic External to Service using IngressIP",
+            "Name" : "Basic External to Service using IngressIP",
             "Type" : "ExternalToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -118,141 +118,129 @@
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Local node",
+            "Name" : "Basic Pod to Local node",
             "Type" : "PodToLocalNode",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Remote node",
+            "Name" : "Basic Pod to Remote node",
             "Type" : "PodToRemoteNode",
             "Skip" : false
         },
         {
-            "Name" : "[IPV4] Basic Pod to Internet",
+            "Name" : "Basic Pod to Internet",
             "Type" : "PodToInternet",
             "Skip" : false
-        },
+        }
+    ],
+    "IPV6Testcases" : [
         {
-            "Name" : "[IPV6] Basic Pod to Local Pod using Pod IP",
+            "Name" : "Basic Pod to Local Pod using Pod IP",
             "Type" : "PodToLocalPod",
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Remote Pod using Pod IP",
+            "Name" : "Basic Pod to Remote Pod using Pod IP",
             "Type" : "PodToRemotePod",
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using Cluster IP-ETPCluster",
+            "Name" : "Basic Pod to Service using Cluster IP-ETPCluster",
             "Type" : "PodToClusterIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using Cluster IP-ETPLocal",
+            "Name" : "Basic Pod to Service using Cluster IP-ETPLocal",
             "Type" : "PodToClusterIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using NodePort-ETPLocal",
+            "Name" : "Basic Pod to Service using NodePort-ETPLocal",
             "Type" : "PodToNodePort",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using NodePort-ETPCluster",
+            "Name" : "Basic Pod to Service using NodePort-ETPCluster",
             "Type" : "PodToNodePort",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using IngressIP-ETPLocal",
+            "Name" : "Basic Pod to Service using IngressIP-ETPLocal",
             "Type" : "PodToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Service using IngressIP-ETPCluster",
+            "Name" : "Basic Pod to Service using IngressIP-ETPCluster",
             "Type" : "PodToIngressIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic External to ETPCluster Service using IngressIP",
+            "Name" : "Basic External to ETPCluster Service using IngressIP",
             "Type" : "ExternalToIngressIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic External to Service using IngressIP-ETPLocal",
+            "Name" : "Basic External to Service using IngressIP-ETPLocal",
             "Type" : "ExternalToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic External to Service using IngressIP-ETPCluster",
+            "Name" : "Basic External to Service using IngressIP-ETPCluster",
             "Type" : "ExternalToIngressIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 4,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 2,
-            "TimeBtwEachRequestInMs" : 100,
-            "UseIPV6" : true
+            "TimeBtwEachRequestInMs" : 100
         },
         {
-            "Name" : "[IPV6] Basic Pod to Local node",
-            "Type" : "PodToLocalNode",
-            "UseIPV6" : true
+            "Name" : "Basic Pod to Local node",
+            "Type" : "PodToLocalNode"
         },
         {
-            "Name" : "[IPV6] Basic Pod to Remote node",
-            "Type" : "PodToRemoteNode",
-            "UseIPV6" : true
+            "Name" : "Basic Pod to Remote node",
+            "Type" : "PodToRemoteNode"
         },
         {
-            "Name" : "[IPV6] Basic Pod to Internet",
+            "Name" : "Basic Pod to Internet",
             "Type" : "PodToInternet",
-            "RemoteAddress" : "bing.com",
-            "UseIPV6" : true
+            "RemoteAddress" : "bing.com"
         }
     ]
 }
