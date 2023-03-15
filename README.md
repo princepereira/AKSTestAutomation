@@ -24,18 +24,10 @@ Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngres
 RemoteAddress : Deafult: bing.com [Only for Ping to internet]
 ```
 ```
-#### Planned
-StartClient : Foreground/Background
-```
-```
-#### Planned
-Actions : [ { "ScaleTo" : 2}, { "StartClient" : "Foreground/Background"}, { "ReadinessProbe" : true/false } ]
-```
-```
-#### Planned
-ExpectedResult : ""
-```
+Actions : [ { "ScaleTo" : 2 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "PassReadinessProbe" : true } ]
 
+Actions only supported for : PodToClusterIP, PodToIngressIP, ExternalToIngressIP
+```
 #### Sample testconf.json file
 ```
 {
@@ -95,12 +87,11 @@ ExpectedResult : ""
             "TimeBtwEachRequestInMs" : 100,
             "Actions" : [
                 { "ScaleTo" : 2},
-                { "ReadinessProbe" : false },
-                { "StartClient" : "Background"},
+                { "FailReadinessProbe" : false },
                 { "ScaleTo" : 4},
-                { "ReadinessProbe" : true },
+                { "Sleep" : 4},
+                { "PassReadinessProbe" : true }
             ],
-            ExpectedResult : "",
             "Skip" : false
         },
         {
