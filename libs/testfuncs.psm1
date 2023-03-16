@@ -2,7 +2,7 @@ Import-Module -Force .\libs\utils.psm1
 
 $ActionScaleTo = "ScaleTo"
 $ActionSleep = "Sleep"
-$ActionDeleteServerPods = "DeleteServerPods"
+$ActionStartTcpClient = "StartTcpClient"
 $ActionFailReadinessProbe = "FailReadinessProbe"
 $ActionPassReadinessProbe = "PassReadinessProbe"
 
@@ -38,11 +38,18 @@ function TestPodToClusterIP {
     }
     
     $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
-    $clusterIP = GetClusterIP -namespace $appInfo.Namespace -serviceName $serviceName
+
+    if($testcase.DnsName -and $testcase.DnsName -ne "") {
+        $clusterIP = $testcase.DnsName
+    } else {
+        $clusterIP = GetClusterIP -namespace $appInfo.Namespace -serviceName $serviceName
+    }
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
-        Log "Start TCP Connection to $clusterIP : $servicePort in background"
-        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
+        if($result -eq "FAILED") {
+            return $false
+        }
     } else {
         Log "Start TCP Connection to $clusterIP : $servicePort "
         $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -50,6 +57,9 @@ function TestPodToClusterIP {
     
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $clusterIP -servicePort $servicePort
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
@@ -130,8 +140,10 @@ function TestPodToIngressIP {
     $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
-        Log "Start TCP Connection to $ingressIP : $servicePort in background"
-        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
+        if($result -eq "FAILED") {
+            return $false
+        }
     } else {
         Log "Start TCP Connection to $ingressIP : $servicePort "
         $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -139,6 +151,9 @@ function TestPodToIngressIP {
 
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
@@ -177,8 +192,10 @@ function TestExternalToIngressIP {
     $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
-        Log "Start TCP Connection to $ingressIP : $servicePort in background"
-        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -extClient $true
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -extClient $true -index $index
+        if($result -eq "FAILED") {
+            return $false
+        }
     } else {
         Log "Start TCP Connection to $ingressIP : $servicePort "
         $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -187,6 +204,9 @@ function TestExternalToIngressIP {
     $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
@@ -342,9 +362,47 @@ function TestPodToInternet {
         [Parameter (Mandatory = $true)] [Int32]$index
     )
     $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
-    Log "Start Test-NetConnection"
-    $result = kubectl exec $clientName -n $appInfo.Namespace -- powershell -ExecutionPolicy Unrestricted -command Test-NetConnection -p 80 | findstr "Succeeded"
-    $tcaseName = $testcase.Name
+    $remoteAddr = "bing.com"
+    if($testcase.RemoteAddress -ne "") {
+        $remoteAddr = $testcase.RemoteAddress
+    }
+
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remoteAddr
+
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+    }
+
+    $dnsResolved = kubectl exec $clientName -n $appInfo.Namespace -- powershell -command "Resolve-DnsName $remoteAddr | Select-Object -ExpandProperty IPAddress"
+
+    if(!($dnsResolved)) {
+        $result = "[FAILED] Testcase $index : [$ipVersion][$tcaseName] - Result: DNS resolution to $remoteAddr failed"
+        Log $result
+        Add-content $appInfo.LogPath -value $result
+        return $false
+    }
+
+    if($useIPV6) {
+        $ipv6Addr = ""
+        foreach($address in $dnsResolved) {
+            if($address.Contains(":")) {
+                $ipv6Addr = $address
+                break
+            }
+        }
+        if($ipv6Addr -eq "") {
+            $availableAddresses = $dnsResolved
+            $result = "[FAILED] Testcase $index : [$ipVersion][$tcaseName] - Result: No IPV6 address for $remoteAddr found. Available addresses : $availableAddresses "
+            Log $result
+            Add-content $appInfo.LogPath -value $result
+            return $false
+        }
+        $remoteAddr = $ipv6Addr
+    }
+
+    Log "Start Test-NetConnection to $remoteAddr"
+    $result = kubectl exec $clientName -n $appInfo.Namespace -- powershell -ExecutionPolicy Unrestricted -command Test-NetConnection -Port 80 -RemoteAddress $remoteAddr | findstr "Succeeded"
     LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $result
 }
 
@@ -400,6 +458,7 @@ function RunActions {
         [Parameter (Mandatory = $true)] [string]$clientName,
         [Parameter (Mandatory = $true)] [string]$ipAddress,
         [Parameter (Mandatory = $true)] [string]$servicePort,
+        [Parameter (Mandatory = $true)] [int]$index,
         [Parameter (Mandatory = $true)] [bool]$useIPV6,
         [Parameter (Mandatory = $false)] [bool]$extClient = $false
     )
@@ -410,18 +469,45 @@ function RunActions {
     $requestsPerConnection = $testcase.RequestsPerConnection
     $timeBtwEachRequestInMs = $testcase.TimeBtwEachRequestInMs
 
-    if($extClient) {
-        $Job = Start-Job -ScriptBlock { bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
-    } else {
-        $Job = Start-Job -ScriptBlock { kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+    $startTcpClientCount = 0
+
+    foreach($action in $testcase.Actions) {
+        if($action.$ActionStartTcpClient) {
+            $startTcpClientCount++
+        }
     }
-    
+
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+    }
+    $tcaseName = $testcase.Name
+
+    if($startTcpClientCount -ne 1) {
+        $result = "[FAILED] Testcase $index : [$ipVersion][$tcaseName] - Result: Validation Failed. One and Only One 'StartTcpClient' Action is Expected"
+        Log $result
+        Add-content $appInfo.LogPath -value $result
+        return "FAILED"
+    }
 
     foreach($action in $testcase.Actions) {
 
+        if($action.$ActionStartTcpClient) { 
+            Log "Start TCP Connection to $ipAddress : $servicePort in background"
+            if($extClient) {
+                $Job = Start-Job -ScriptBlock { bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+            } else {
+                $Job = Start-Job -ScriptBlock { kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+            } 
+        }
+
         if($action.$ActionScaleTo) { ScalePodsInBackground -namespace $appInfo.Namespace -deploymentName $appInfo.ServerDeploymentName -podCount $action.$ActionScaleTo }
 
-        if($action.$ActionSleep) {Start-Sleep -Seconds $action.$ActionSleep }
+        if($action.$ActionSleep) {
+            $sleepTime = $action.$ActionSleep
+            Log "Sleep Action Invoked. Sleeping for $sleepTime seconds."
+            Start-Sleep -Seconds $action.$ActionSleep 
+        }
 
         if($action.$ActionFailReadinessProbe) { FailReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6 }
 
@@ -433,4 +519,170 @@ function RunActions {
     $result = Receive-Job $Job
     $resultStr = $result | findstr "ConnectionsSucceded"
     return $resultStr
+}
+
+function TestPingNodeToRemoteNode {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+    $remoteNodeIP = GetRemoteNodeIP -nodeName $nodeName -useIPV6 $useIPV6
+
+    Log "Start Ping Test to $remoteNodeIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping -6 $remoteNodeIP
+    } else {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping $remoteNodeIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localNodeIP is Success : $pingTestSuccess."
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remoteNodeIP
+    LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
+}
+
+function TestPingNodeToInternet {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+
+    $hpcPodNames = GetAllPodNames -namespace $appInfo.HpcNamespace -deploymentName $appInfo.HpcDaemonsetName
+
+    $remoteAddress = "bing.com"
+    if($remoteAddress -and $testcase.RemoteAddress -ne "") {
+        $remoteAddress = $testcase.RemoteAddress
+    }
+
+    foreach($hpcPodName in $hpcPodNames) {
+
+        $nodeName = GetNodeNameFromPodName -namespace $appInfo.HpcNamespace -podName $hpcPodName
+        Log "Start Ping from Node [$nodeName] to Internet [$remoteAddress]"
+
+        if($useIPV6) {
+            $result = kubectl exec $hpcPodName -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping -6 $remoteAddress
+        } else {
+            $result = kubectl exec $hpcPodName -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping $remoteAddress
+        }
+
+        $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+        $pingTestMessage = "Ping from $nodeName [HPC: $hpcPodName] to Internet [$remoteAddress] is Success : $pingTestSuccess."
+        $direction = "$nodeName -> $remoteAddress"
+        $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $direction
+        $tcaseName = "[Node:$nodeName]$tcaseName"
+        LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
+
+    }
+
+}
+
+function TestPingNodeToLocalPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+    $localPodIP = GetLocalServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+
+    Log "Start Ping Test to $localPodIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping -6 $localPodIP
+    } else {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping $localPodIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $localPodIP is Success : $pingTestSuccess."
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $localPodIP
+    LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
+}
+
+function TestNodeToRemotePod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+    $remotePodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $internalPort = $appInfo.InternalPort
+
+    Log "Start Test-NetConnection to $remotePodIP : $internalPort"
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command Test-NetConnection -RemoteAddress $remotePodIP -Port $appInfo.InternalPort | findstr "Succeeded"
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remotePodIP -servicePort $internalPort
+    LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $result
+}
+
+function TestNodeToClusterIP {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    
+    if(!(ScalePods -testcase $testcase -appInfo $appInfo -index $index)) {
+        return $false
+    }
+
+    Log "Pods"
+    kubectl get pods -o wide -n $appInfo.Namespace
+
+    $serviceName = $appInfo.ETPClusterServiceName
+    $servicePort = $appInfo.ETPClusterServicePort
+    if($testcase.ServiceType -eq "ETPLocal") {
+        $serviceName = $appInfo.ETPLocalServiceName
+        $servicePort = $appInfo.ETPLocalServicePort
+    }
+
+    if($useIPV6) {
+        $serviceName = $appInfo.ETPClusterServiceNameIPV6
+        $servicePort = $appInfo.ETPClusterServicePortIPV6
+        if($testcase.ServiceType -eq "ETPLocal") {
+            $serviceName = $appInfo.ETPLocalServiceNameIPV6
+            $servicePort = $appInfo.ETPLocalServicePortIPV6
+        }
+    }
+    
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+
+    if($testcase.DnsName -and $testcase.DnsName -ne "") {
+        $clusterIP = $testcase.DnsName
+    } else {
+        $clusterIP = GetClusterIP -namespace $appInfo.Namespace -serviceName $serviceName
+    }
+
+    if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
+        $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientHpc -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
+        if($result -eq "FAILED") {
+            return $false
+        }
+    } else {
+        Log "Start TCP Connection to $clusterIP : $servicePort "
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    }
+    
+    $conCount = $testcase.ConnectionCount
+    $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $clusterIP -servicePort $servicePort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }

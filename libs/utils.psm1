@@ -59,7 +59,62 @@ function LogPingResult {
     Add-content $logPath -value $result
 }
 
-function GetClientName {
+function GetPodNameFromNode {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$nodeName,
+        [Parameter (Mandatory = $true)] [String]$deploymentName,
+        [Parameter (Mandatory = $false)] [System.Boolean]$isRemoteNode = $false
+    )
+    $items = (kubectl get pods -n $namespace -o json | ConvertFrom-Json).Items | Select-Object metadata, spec
+    foreach($item in $items) {
+        if($isRemoteNode) {
+            if($item.spec.nodeName -ne $nodeName) {
+                $metadatas = $item.metadata
+                foreach($metadata in $metadatas) { 
+                    if(($metadata.labels).app -eq $deploymentName ) { 
+                        return $metadata.name 
+                    }
+                    if(($metadata.labels).Name -eq $deploymentName ) { 
+                        return $metadata.name 
+                    } 
+                }
+            }
+        } else {
+            if($item.spec.nodeName -eq $nodeName) {
+                $metadatas = $item.metadata
+                foreach($metadata in $metadatas) { 
+                    if(($metadata.labels).app -eq $deploymentName ) { 
+                        return $metadata.name 
+                    }
+                    if(($metadata.labels).Name -eq $deploymentName ) { 
+                        return $metadata.name 
+                    } 
+                }
+            }
+        }
+    }
+    return ""
+}
+
+function GetAllPodNames {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$deploymentName
+    )
+    $podNames = @()
+    $metadatas = ((kubectl get pods -n $namespace -o json | ConvertFrom-Json).Items).metadata
+    foreach($metadata in $metadatas) { 
+        if(($metadata.labels).app -eq $deploymentName ) { 
+            $podNames += $metadata.name 
+        } elseif(($metadata.labels).Name -eq $deploymentName ) { 
+            $podNames += $metadata.name 
+        } 
+    }
+    return $podNames
+}
+
+function GetPodName {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
         [Parameter (Mandatory = $true)] [String]$deploymentName
@@ -68,9 +123,20 @@ function GetClientName {
     foreach($metadata in $metadatas) { 
         if(($metadata.labels).app -eq $deploymentName ) { 
             return $metadata.name 
+        }
+        if(($metadata.labels).Name -eq $deploymentName ) { 
+            return $metadata.name 
         } 
     }
     return ""
+}
+
+function GetClientName {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$deploymentName
+    )
+    return GetPodName -namespace $namespace -deploymentName $deploymentName
 }
 
 function GetNodeNameFromPodName {
@@ -218,7 +284,7 @@ function GetAllServerPodIPs {
     $podIPs = @()
     $items = ((kubectl get pods -n $namespace -o json | ConvertFrom-Json).Items)
     foreach($item in $items) {
-        if(($item.spec).nodeName -eq $nodeName -and ((($item.metadata).labels).app -eq $serverDeploymentName)) {
+        if($item.metadata.labels.app -eq $serverDeploymentName) {
             if($useIPV6) {
                 $podIPs += $item.status.podIPs[1].ip
             } else {
@@ -376,15 +442,16 @@ function FailReadinessProbeForAllServerPods {
         [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
     )
 
-    Log "Failing readiness probe for all server pods started."
     $serverPodIPs = GetAllServerPodIPs -namespace $namespace -serverDeploymentName $serverDeploymentName -useIPV6 $useIPV6
     $clientName = GetClientName -namespace $namespace -deploymentName $clientDeploymentName
+    Log "Failing readiness probe for all server pods started. PodIPs : $serverPodIPs"
+
     foreach($podIP in $serverPodIPs) {
-        $apiReq = "curl $podIP:8090/failreadinessprobe"
+        $apiReq = "curl $podIP:8090/failreadinessprobe -UseBasicParsing"
         if($useIPV6) {
-            $apiReq = "curl [$podIP]:8090/failreadinessprobe"
+            $apiReq = "curl [$podIP]:8090/failreadinessprobe -UseBasicParsing"
         }
-        $result = kubectl exec $clientName -n $namespacee -- $apiReq
+        $result = kubectl exec $clientName -n $namespace -- powershell -command $apiReq
         Log "FailReadiness Probe for $podIP status : $result"
     }
     Log "Failing readiness probe for all server pods completed."
@@ -398,15 +465,16 @@ function PassReadinessProbeForAllServerPods {
         [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
     )
 
-    Log "Passing readiness probe for all server pods started."
     $serverPodIPs = GetAllServerPodIPs -namespace $namespace -serverDeploymentName $serverDeploymentName -useIPV6 $useIPV6
     $clientName = GetClientName -namespace $namespace -deploymentName $clientDeploymentName
+    Log "Passing readiness probe for all server pods started. PodIPS : $serverPodIPs"
+
     foreach($podIP in $serverPodIPs) {
-        $apiReq = "curl $podIP:8090/passreadinessprobe"
+        $apiReq = "curl $podIP:8090/passreadinessprobe -UseBasicParsing"
         if($useIPV6) {
-            $apiReq = "curl [$podIP]:8090/passreadinessprobe"
+            $apiReq = "curl [$podIP]:8090/passreadinessprobe -UseBasicParsing"
         }
-        $result = kubectl exec $clientName -n $namespacee -- $apiReq
+        $result = kubectl exec $clientName -n $namespace -- powershell -command $apiReq
         Log "PassReadiness Probe for $podIP status : $result"
     }
     Log "Passing readiness probe for all server pods completed."
@@ -435,7 +503,10 @@ function NewTestCaseName {
     param (
         [Parameter (Mandatory = $true)] [String]$testcaseName,
         [Parameter (Mandatory = $true)] [String]$serviceIP,
-        [Parameter (Mandatory = $true)] [String]$servicePort
+        [Parameter (Mandatory = $false)] [String]$servicePort = ""
     )
+    if($servicePort -eq "") {
+        return "$testcaseName [$serviceIP]"
+    }
     return "$testcaseName [$serviceIP : $servicePort]"
 }

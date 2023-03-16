@@ -8,6 +8,10 @@ function InstallApps {
     $namespace = $appInfo.Namespace
     kubectl create namespace $namespace
 
+    if(($appInfo.HpcDaemonsetName).Contains("22")) {
+        kubectl create -f .\Yamls\HPC\hpc-ds-win22.yaml
+    }
+
     if($appInfo.InstallIPv4Required) {
         kubectl create -f .\Yamls\IPV4
     }
@@ -40,6 +44,7 @@ function UninstallApps {
     kubectl delete -f .\Yamls
     kubectl delete -f .\Yamls\IPV4
     kubectl delete -f .\Yamls\IPV6
+    kubectl delete -f .\Yamls\HPC
     Start-Sleep -Seconds 10
     kubectl delete namespace $namespace --force=true
     Start-Sleep -Seconds 10

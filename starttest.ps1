@@ -17,6 +17,11 @@ $TypePingPodToRemotePod = "PingPodToRemotePod"
 $TypePingPodToLocalNode = "PingPodToLocalNode"
 $TypePingPodToRemoteNode = "PingPodToRemoteNode"
 $TypePingPodToInternet = "PingPodToInternet"
+$TypePingNodeToRemoteNode = "PingNodeToRemoteNode"
+$TypePingNodeToLocalPod = "PingNodeToLocalPod"
+$TypePingNodeToInternet = "PingNodeToInternet"
+$TypeNodeToRemotePod = "NodeToRemotePod"
+
 
 $testConf = Get-Content .\testconf.json | ConvertFrom-Json
 $clusterInfo = ($testConf).ClusterInfo
@@ -57,6 +62,10 @@ function RunTestcase {
         $TypePingPodToLocalNode { TestPingPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePingPodToRemoteNode { TestPingPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePingPodToInternet { TestPingPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingNodeToRemoteNode { TestPingNodeToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingNodeToLocalPod { TestPingNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingNodeToInternet { TestPingNodeToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeNodeToRemotePod { TestNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         default {"No Match Found"}
     }
     Log "Testcase $index Execution Completed. [$ipVersion][Testcase : $tcaseName]"

@@ -24,7 +24,7 @@ Type : PodToClusterIP, PodToLocalPod, PodToRemotePod, PodToNodePort, PodToIngres
 RemoteAddress : Deafult: bing.com [Only for Ping to internet]
 ```
 ```
-Actions : [ { "ScaleTo" : 2 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "PassReadinessProbe" : true } ]
+Actions : [ { "StartTcpClient" : true }, { "ScaleTo" : 2 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "PassReadinessProbe" : true } ]
 
 Actions only supported for : PodToClusterIP, PodToIngressIP, ExternalToIngressIP
 ```
@@ -86,12 +86,14 @@ Actions only supported for : PodToClusterIP, PodToIngressIP, ExternalToIngressIP
             "RequestsPerConnection" : 2,
             "TimeBtwEachRequestInMs" : 100,
             "Actions" : [
-                { "ScaleTo" : 2},
+                { "StartTcpClient" : true },
+                { "ScaleTo" : 2 },
                 { "FailReadinessProbe" : false },
-                { "ScaleTo" : 4},
-                { "Sleep" : 4},
+                { "ScaleTo" : 4 },
+                { "Sleep" : 4 },
                 { "PassReadinessProbe" : true }
             ],
+            "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         },
         {
