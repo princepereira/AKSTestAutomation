@@ -430,3 +430,12 @@ function IsActionUnSupported {
     }
     return $false
 }
+
+function NewTestCaseName {
+    param (
+        [Parameter (Mandatory = $true)] [String]$testcaseName,
+        [Parameter (Mandatory = $true)] [String]$serviceIP,
+        [Parameter (Mandatory = $true)] [String]$servicePort
+    )
+    return "$testcaseName [$serviceIP : $servicePort]"
+}

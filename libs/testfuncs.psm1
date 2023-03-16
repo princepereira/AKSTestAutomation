@@ -50,7 +50,8 @@ function TestPodToClusterIP {
     
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
-    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $clusterIP -servicePort $servicePort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function TestPodToNodePort {
@@ -89,7 +90,8 @@ function TestPodToNodePort {
         $conCount = $testcase.ConnectionCount
         $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
         $newIndex = "$index [$nodeIP :$nodePort]"
-        LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $newIndex -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+        $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $nodeIP -servicePort $nodePort
+        LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $newIndex -expectedResult $expectedResult -actualResult $result[$result.Count-1]
     }
 }
 
@@ -137,7 +139,8 @@ function TestPodToIngressIP {
 
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
-    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function TestExternalToIngressIP {
@@ -184,7 +187,8 @@ function TestExternalToIngressIP {
     $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
-    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function TestPodToLocalPod {
@@ -202,7 +206,8 @@ function TestPodToLocalPod {
     $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $localPodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
-    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $localPodIP -servicePort $internalPort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function TestPingPodToLocalPod {
@@ -384,7 +389,8 @@ function TestPodToRemotePod {
     $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $remotePodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
-    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $testcase.Name -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remotePodIP -servicePort $internalPort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function RunActions {
