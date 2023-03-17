@@ -519,6 +519,8 @@ function RunActions {
 
     Wait-Job $Job
     $result = Receive-Job $Job
+    Remove-Job $job
+    
     $resultStr = $result | findstr "ConnectionsSucceded"
     return $resultStr
 }
