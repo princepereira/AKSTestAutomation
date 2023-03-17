@@ -490,14 +490,31 @@ function RunActions {
         return "FAILED"
     }
 
+    $markerFilePath = ".\logs\marker.txt"
+    New-Item -Path $markerFilePath -ItemType File
+
     foreach($action in $testcase.Actions) {
 
         if($action.$ActionStartTcpClient) { 
             Log "Start TCP Connection to $ipAddress : $servicePort in background"
             if($extClient) {
-                $Job = Start-Job -ScriptBlock { bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+                $Job = Start-Job -ScriptBlock { 
+                    $result = bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] ;
+                    While(Test-Path $markerFilePath) {
+                        Start-Sleep -Seconds 2
+                    }
+                    Start-Sleep -Seconds 2
+                    return $result
+                } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } else {
-                $Job = Start-Job -ScriptBlock { kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+                $Job = Start-Job -ScriptBlock { 
+                    $result = kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
+                    While(Test-Path $markerFilePath) {
+                        Start-Sleep -Seconds 2
+                    }
+                    Start-Sleep -Seconds 2
+                    return $result
+                } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } 
         }
 
@@ -517,10 +534,12 @@ function RunActions {
 
     WaitForPodsToBeReady -namespace $appInfo.Namespace
 
+    Remove-Item $markerFilePath
+
     Wait-Job $Job
     $result = Receive-Job $Job
     Remove-Job $job
-    
+
     $resultStr = $result | findstr "ConnectionsSucceded"
     return $resultStr
 }
