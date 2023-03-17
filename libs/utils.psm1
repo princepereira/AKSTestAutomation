@@ -533,3 +533,43 @@ function NewTestCaseName {
     }
     return "$testcaseName [$serviceIP : $servicePort]"
 }
+
+function Abc {
+    $clientName = "tcp-client-5fd56f8dc7-l6zdd"
+    $namespace = "demo"
+    $ipAddress = "fd39:a5ef:4d7f:e743::1f34"
+    $servicePort = "4444"
+    $connCount = 4
+    $requestsPerConnection = 10
+    $timeBtwEachRequestInMs = 1000
+
+    $Job = Start-Job -ScriptBlock { 
+        # $result = kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
+        $clientName = $args[0]
+        $namespace = $args[1]
+        $ipAddress = $args[2]
+        $servicePort = $args[3]
+        $connCount = $args[4]
+        $requestsPerConnection = $args[5]
+        $timeBtwEachRequestInMs = $args[6]
+        kubectl exec $clientName -n $namespace -- powershell -command "client -i $ipAddress -p $servicePort -c $connCount -r $requestsPerConnection -d $timeBtwEachRequestInMs | tee mylog.txt"
+        return kubectl exec $clientName -n $namespace -- powershell -command "Get-Content .\mylog.txt"
+        # While(Test-Path $markerFilePath) {
+        #     Start-Sleep -Seconds 2
+        # }
+        # Start-Sleep -Seconds 2
+        # return $result
+    } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+    
+    # Start-Sleep -Seconds 120
+
+    Wait-Job $Job
+    $result = Receive-Job $Job
+    Remove-Job $job
+
+    Log "AAAAAAAAAAAAA"
+    $resultStr = $result | findstr "ConnectionsSucceded"
+    Log "BBBB "
+    $resultStr = $result | findstr "ConnectionsSucceded"
+    return $resultStr
+}

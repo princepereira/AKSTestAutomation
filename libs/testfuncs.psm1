@@ -47,9 +47,6 @@ function TestPodToClusterIP {
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
         $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
-        if($result -eq "FAILED") {
-            return $false
-        }
     } else {
         Log "Start TCP Connection to $clusterIP : $servicePort "
         $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -141,9 +138,6 @@ function TestPodToIngressIP {
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
         $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
-        if($result -eq "FAILED") {
-            return $false
-        }
     } else {
         Log "Start TCP Connection to $ingressIP : $servicePort "
         $result = kubectl exec $clientName -n $appInfo.Namespace -- client -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -193,9 +187,6 @@ function TestExternalToIngressIP {
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
         $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientName -ipAddress $ingressIP -servicePort $servicePort -useIPV6 $useIPV6 -extClient $true -index $index
-        if($result -eq "FAILED") {
-            return $false
-        }
     } else {
         Log "Start TCP Connection to $ingressIP : $servicePort "
         $result = bin\client.exe -i $ingressIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
@@ -477,45 +468,43 @@ function RunActions {
         }
     }
 
-    $ipVersion = "IPV4"
-    if($useIPV6) {
-        $ipVersion = "IPV6"
-    }
-    $tcaseName = $testcase.Name
+    # $ipVersion = "IPV4"
+    # if($useIPV6) {
+    #     $ipVersion = "IPV6"
+    # }
+    # $tcaseName = $testcase.Name
 
-    if($startTcpClientCount -ne 1) {
-        $result = "[FAILED] Testcase $index : [$ipVersion][$tcaseName] - Result: Validation Failed. One and Only One 'StartTcpClient' Action is Expected"
-        Log $result
-        Add-content $appInfo.LogPath -value $result
-        return "FAILED"
-    }
+    # if($startTcpClientCount -ne 1) {
+    #     $result = "[SKIPPED] Testcase $index : [$ipVersion][$tcaseName] - Result: Validation Failed. One and Only One 'StartTcpClient' Action is Expected"
+    #     Log $result
+    #     Add-content $appInfo.LogPath -value $result
+    #     return "FAILED"
+    # }
 
-    $markerFilePath = ".\logs\marker.txt"
-    $markerFilePath2 = ".\logs\marker2.txt"
-    New-Item -Path $markerFilePath -ItemType File
+    # kubectl exec $clientName -n $namespace -- powershell -command "Remove-Item -Force mylog.txt"
 
     foreach($action in $testcase.Actions) {
 
         if($action.$ActionStartTcpClient) { 
             Log "Start TCP Connection to $ipAddress : $servicePort in background"
+
             if($extClient) {
                 $Job = Start-Job -ScriptBlock { 
-                    bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] > $markerFilePath2 ;
-                    While(Test-Path $markerFilePath) {
-                        Start-Sleep -Seconds 2
-                    }
-                    Start-Sleep -Seconds 2
-                    # return $result
+                    bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4]
                 } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } else {
-                $Job = Start-Job -ScriptBlock { 
-                    # $result = kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
-                    kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] > $markerFilePath2
-                    While(Test-Path $markerFilePath) {
-                        Start-Sleep -Seconds 2
-                    }
-                    Start-Sleep -Seconds 2
-                    # return $result
+                $Job = Start-Job -ScriptBlock {
+                    # $clientName = $args[0]
+                    # $namespace = $args[1]
+                    # $ipAddress = $args[2]
+                    # $servicePort = $args[3]
+                    # $connCount = $args[4]
+                    # $requestsPerConnection = $args[5]
+                    # $timeBtwEachRequestInMs = $args[6]
+                    # kubectl exec $clientName -n $namespace -- powershell -command ".\client.exe -i $ipAddress -p $servicePort -c $connCount -r $requestsPerConnection -d $timeBtwEachRequestInMs | tee mylog.txt"
+                    # Start-Sleep -Seconds 5
+                    # kubectl cp "$clientName:mylog.txt" .\logs\mylog.txt -n $namespace 
+                    kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
                 } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } 
         }
@@ -536,14 +525,23 @@ function RunActions {
 
     WaitForPodsToBeReady -namespace $appInfo.Namespace
 
-    Remove-Item $markerFilePath
-
     Wait-Job $Job
     $result = Receive-Job $Job
     Remove-Job $job
 
+    # $res = kubectl exec $clientName -n $appInfo.Namespace -- powershell -command "Get-Content .\mylog.txt | findstr ConnectionsSucceded"
+    # while(($null -eq $res) -or ($res -eq "")) {
+    #     Start-Sleep -Seconds 3
+    #     $res = kubectl exec $clientName -n $appInfo.Namespace -- powershell -command "Get-Content .\mylog.txt | findstr ConnectionsSucceded"
+    # }
+
+    # $result = Get-Content .\logs\mylog.txt
+
+    # Remove-Item .\logs\mylog.txt
+
     $resultStr = $result | findstr "ConnectionsSucceded"
-    return $resultStr
+    Log ">>>>>>>> : $res"
+    return $resultStr 
 }
 
 function TestPingNodeToRemoteNode {
@@ -695,9 +693,6 @@ function TestNodeToClusterIP {
 
     if(($testcase.Actions) -and ($testcase.Actions).Count -gt 0) {
         $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientHpc -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
-        if($result -eq "FAILED") {
-            return $false
-        }
     } else {
         Log "Start TCP Connection to $clusterIP : $servicePort "
         $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs

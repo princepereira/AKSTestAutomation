@@ -1,1 +1,3 @@
-[PASSED] Testcase 1 : [IPV4][Basic Pod to Service using Cluster IP] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:0 , Iteration:1 
+[PASSED] Testcase 23 : [IPV6][Basic Pod to Service using Cluster IP. StartTcp, FailProbe, PassProbe [fd39:a5ef:4d7f:e743::1f34 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 24 : [IPV6][Basic Pod to Service using Cluster IP. Failprobe, StartTcp, PassProbe [fd39:a5ef:4d7f:e743::1f34 : 4444]] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:2 , Iteration:1 
+[PASSED] Testcase 25 : [IPV6][Basic Pod to Service using Cluster IP. StartTcp, Deletepod, Connection should Pass [fd39:a5ef:4d7f:e743::1f34 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
