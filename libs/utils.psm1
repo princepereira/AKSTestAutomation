@@ -344,7 +344,7 @@ function MakeEnoughPodsForPodToPodTesting {
     $nodeCount = ((kubectl get nodes -o json | ConvertFrom-Json).items).Count
     $podCount = ((kubectl get pods -n $appInfo.Namespace -o json | ConvertFrom-Json).items).Count
     $expPodCount = $nodeCount + 3
-    if($expPodCount -ge $podCount) {
+    if($podCount -ge $expPodCount) {
         return $true
     }
 
