@@ -515,6 +515,8 @@ function RunActions {
 
     }
 
+    WaitForPodsToBeReady -namespace $appInfo.Namespace
+
     Wait-Job $Job
     $result = Receive-Job $Job
     $resultStr = $result | findstr "ConnectionsSucceded"

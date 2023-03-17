@@ -46,7 +46,7 @@
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "ScaleTo" : 6 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "ScaleTo" : 3 } ],
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using Cluster IP Service Name",
@@ -58,7 +58,7 @@
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "ScaleTo" : 6 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "ScaleTo" : 3 } ],
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Local Pod using Pod IP",
@@ -66,33 +66,33 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Pod to Local Pod using Pod IP",
             "Type" : "PingPodToLocalPod",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Pod to Remote Pod using Pod IP",
             "Type" : "PingPodToRemotePod",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Pod to Local Node using Node IP",
             "Type" : "PingPodToLocalNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Pod to Remote Node using Node IP",
             "Type" : "PingPodToRemoteNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Pod to Internet using bing.com",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com", 
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Remote Pod using Pod IP",
@@ -100,7 +100,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using NodePort",
@@ -110,7 +110,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using IngressIP",
@@ -120,7 +120,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic External to Service using IngressIP",
@@ -130,22 +130,22 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Local node",
             "Type" : "PingPodToLocalNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Remote node",
             "Type" : "PingPodToRemoteNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Internet",
             "Type" : "PodToInternet",
-            "Skip" : true
+            "Skip" : false
         }
     ],
     "IPV6Testcases" : [
@@ -155,7 +155,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Remote Pod using Pod IP",
@@ -163,7 +163,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using Cluster IP-ETPCluster",
@@ -173,7 +173,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using Cluster IP-ETPCluster",
@@ -184,7 +184,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using Cluster IP-ETPLocal",
@@ -194,7 +194,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using NodePort-ETPLocal",
@@ -204,7 +204,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using NodePort-ETPCluster",
@@ -214,7 +214,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using IngressIP-ETPLocal",
@@ -224,7 +224,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using IngressIP-ETPCluster",
@@ -234,7 +234,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic External to ETPCluster Service using IngressIP",
@@ -244,7 +244,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic External to Service using IngressIP-ETPLocal",
@@ -254,7 +254,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic External to Service using IngressIP-ETPCluster",
@@ -264,62 +264,62 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Local node",
             "Type" : "PingPodToLocalNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Remote node",
             "Type" : "PingPodToRemoteNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Test from Pod to Internet using DNS",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Test from Pod to Internet using IPV6 IP",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "2620:1ec:c11::200",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic TNC request from Pod to Internet using DNS",
             "Type" : "PodToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic TNC request from Pod to Internet using IPV6 IP",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "2620:1ec:c11::200",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping from Local Node to Remote Node using IPV6 IP",
             "Type" : "PingNodeToRemoteNode",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping from Node to Local Pod using IPV6 IP",
             "Type" : "PingNodeToLocalPod",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic TNC request from Node to Remote Pod using IPV6 IP",
             "Type" : "NodeToRemotePod",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Ping Request from Node to Internet using IPV6 IP",
             "Type" : "PingNodeToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : true
+            "Skip" : false
         },
         {
             "Name" : "Basic Pod to Service using Cluster IP. StartTcp, FailProbe, PassProbe",
@@ -340,7 +340,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true }, { "Sleep" : 30 }, { "StartTcpClient" : true } , { "PassReadinessProbe" : true } , { "Sleep" : 30 }  ],
+            "Actions" : [ { "FailReadinessProbe" : true }, { "Sleep" : 40 }, { "StartTcpClient" : true } , { "PassReadinessProbe" : true } , { "Sleep" : 40 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
             "Skip" : false
         },
@@ -353,6 +353,7 @@
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "ScaleTo" : 0 } , { "Sleep" : 4 } , { "ScaleTo" : 1 } ],
+            "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
             "Skip" : false
         }
     ]
