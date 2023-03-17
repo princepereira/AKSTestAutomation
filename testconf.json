@@ -329,7 +329,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 30 }, { "PassReadinessProbe" : true }, { "Sleep" : 30 } ],
+            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "Sleep" : 2 } ],
             "Skip" : false
         },
         {
@@ -340,7 +340,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true }, { "Sleep" : 40 }, { "StartTcpClient" : true } , { "PassReadinessProbe" : true } , { "Sleep" : 40 }  ],
+            "Actions" : [ { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "StartTcpClient" : true } , { "PassReadinessProbe" : true } , { "Sleep" : 2 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
             "Skip" : false
         },
