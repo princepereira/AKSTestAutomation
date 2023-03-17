@@ -419,20 +419,13 @@ function WaitForPodsToBeReady {
 
 function WaitForPodsToBeNonReady {
     param (
-        [Parameter (Mandatory = $true)] [String]$namespace
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$deployment
     )
     $count = 200
     while ($count--) {
-        $allNonReady = $true
-        $podJson = kubectl get pods -n $namespace -o json | ConvertFrom-Json
-        $readyStatus = ((($podJson.items).status).containerStatuses).ready
-        foreach($isReady in $readyStatus) {
-            if($isReady -eq $true) {
-                $allNonReady = $false
-                break
-            }
-        }
-        if($allNonReady) {
+        $status = (kubectl get deployment $deployment -n $namespace -o json | ConvertFrom-Json ).status
+        if($status.replicas -eq $status.unavailableReplicas) {
             return $true
         }
         Log "Waiting for Pods to be Non Ready"
@@ -479,7 +472,7 @@ function FailReadinessProbeForAllServerPods {
         Log "FailReadiness Probe for $podIP status : $result"
     }
 
-    WaitForPodsToBeNonReady -namespace $namespace
+    WaitForPodsToBeNonReady -namespace $namespace -deployment $serverDeploymentName
 
     Log "Failing readiness probe for all server pods completed."
 }
