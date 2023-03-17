@@ -491,6 +491,7 @@ function RunActions {
     }
 
     $markerFilePath = ".\logs\marker.txt"
+    $markerFilePath2 = ".\logs\marker2.txt"
     New-Item -Path $markerFilePath -ItemType File
 
     foreach($action in $testcase.Actions) {
@@ -499,21 +500,22 @@ function RunActions {
             Log "Start TCP Connection to $ipAddress : $servicePort in background"
             if($extClient) {
                 $Job = Start-Job -ScriptBlock { 
-                    $result = bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] ;
+                    bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4] > $markerFilePath2 ;
                     While(Test-Path $markerFilePath) {
                         Start-Sleep -Seconds 2
                     }
                     Start-Sleep -Seconds 2
-                    return $result
+                    # return $result
                 } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } else {
                 $Job = Start-Job -ScriptBlock { 
-                    $result = kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
+                    # $result = kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
+                    kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6] > $markerFilePath2
                     While(Test-Path $markerFilePath) {
                         Start-Sleep -Seconds 2
                     }
                     Start-Sleep -Seconds 2
-                    return $result
+                    # return $result
                 } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
             } 
         }
