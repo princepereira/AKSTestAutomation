@@ -1,15 +1,15 @@
 {
     "ClusterInfo" : {
-        "Name" : "aksAutTest",
-        "RgName" : "pperRgTest",
+        "Name" : "aksAzureTest",
+        "RgName" : "pperRgAzure",
         "SubscriptionId" : "0709bd7a-8383-4e1d-98c8-f81d1b3443fc",
         "NodePoolName" : "npwin",
         "OsSku" : "Windows2022",
-        "NodeCount" : 2,
-        "InstallRequired" : false,
+        "NodeCount" : 1,
+        "InstallRequired" : true,
         "UninstallAfterTest" : false,
         "ResetClusterCreds" : false,
-        "Npm" : "",
+        "Npm" : "azure",
         "Location" : "eastus2euap"
     },
     "AppInfo" : {
@@ -33,7 +33,7 @@
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
-    "SkipAllTestcases" : false,
+    "SkipAllTestcases" : true,
     "SkipIPV4": true,
     "SkipIPV6": false,
     "IPV4Testcases" : [
