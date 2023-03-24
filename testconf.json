@@ -379,7 +379,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "FailReadinessProbe" : true }, { "Sleep" : 5 }, { "ScaleTo" : 0 } , { "Sleep" : 4 } , { "ScaleTo" : 1 } ],
+            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "FailReadinessProbe" : true }, { "Sleep" : 5 }, { "ScaleTo" : 0 } , { "Sleep" : 4 } , { "ScaleTo" : 1 }],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -431,14 +431,14 @@
             "Skip" : false
         },
         {
-            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.1]. FailReadinessProbe, StartTcpClient, Connections should fail",
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.1]. FailReadinessProbe, StartTcpClient, PassReadinessProbe, Connections should fail",
             "Type" : "PodToClusterIP",
             "ServiceType" : "ETPCluster",
             "ServerPodCount" : 1,
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true } , { "Sleep" : 10 } , { "StartTcpClient" : true } ],
+            "Actions" : [ { "FailReadinessProbe" : true } , { "Sleep" : 10 } , { "StartTcpClient" : true }, { "Sleep" : 20 }, { "PassReadinessProbe" : true } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
             "Skip" : false
         },
