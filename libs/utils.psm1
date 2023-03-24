@@ -534,6 +534,23 @@ function NewTestCaseName {
     return "$testcaseName [$serviceIP : $servicePort]"
 }
 
+function CopyTcpClientToNodes {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$deploymentName
+    )
+    $allPodNames = GetAllPodNames -namespace $namespace -deploymentName $deploymentName
+    foreach($podName in $allPodNames) {
+        $clientExists = kubectl exec $podName -n $namespace -- powershell -command Test-Path C:\k\client.exe
+        if($clientExists) {
+            continue
+        }
+        kubectl cp .\bin\bin.zip $podName:bin.zip -n $namespace
+        kubectl exec $podName -n $namespace -- powershell -command Expand-Archive -Path bin.zip -DestinationPath .
+        kubectl exec $podName -n $namespace -- powershell -command cp .\bin\client.exe C:\k\.
+    }
+}
+
 function Abc {
     $clientName = "tcp-client-5fd56f8dc7-l6zdd"
     $namespace = "demo"
@@ -554,11 +571,6 @@ function Abc {
         $timeBtwEachRequestInMs = $args[6]
         kubectl exec $clientName -n $namespace -- powershell -command "client -i $ipAddress -p $servicePort -c $connCount -r $requestsPerConnection -d $timeBtwEachRequestInMs | tee mylog.txt"
         return kubectl exec $clientName -n $namespace -- powershell -command "Get-Content .\mylog.txt"
-        # While(Test-Path $markerFilePath) {
-        #     Start-Sleep -Seconds 2
-        # }
-        # Start-Sleep -Seconds 2
-        # return $result
     } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
     
     # Start-Sleep -Seconds 120

@@ -10,6 +10,11 @@ function InstallApps {
 
     if(($appInfo.HpcDaemonsetName).Contains("22")) {
         kubectl create -f .\Yamls\HPC\hpc-ds-win22.yaml
+        if(!(WaitForPodsToBeReady -namespace $appInfo.HpcNamespace)) {
+            Log "Containers didn't come up."
+            return $false
+        }
+        CopyTcpClientToNodes -namespace $appInfo.HpcNamespace -deploymentName $appInfo.HpcDaemonsetName
     }
 
     if($appInfo.InstallIPv4Required) {
