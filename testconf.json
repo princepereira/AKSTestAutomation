@@ -277,6 +277,22 @@
             "Skip" : false
         },
         {
+            "Name" : "Basic TCP connection from Node to Local Pod using Pod IP",
+            "Type" : "NodeToLocalPod",
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TCP connection from Node to Remote Pod using Pod IP",
+            "Type" : "NodeToRemotePod",
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
             "Name" : "Basic Ping Test from Pod to Internet using DNS",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com",

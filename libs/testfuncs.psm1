@@ -631,6 +631,27 @@ function TestPingNodeToLocalPod {
     LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
 }
 
+function TestNodeToLocalPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+    $podIP = GetLocalServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $internalPort = $appInfo.InternalPort
+
+    Log "Start TCP Connection to $podIP : $internalPort"
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $podIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $conCount = $testcase.ConnectionCount
+    $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $podIP -servicePort $internalPort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
 function TestNodeToRemotePod {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
@@ -644,10 +665,12 @@ function TestNodeToRemotePod {
     $remotePodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
     $internalPort = $appInfo.InternalPort
 
-    Log "Start Test-NetConnection to $remotePodIP : $internalPort"
-    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command Test-NetConnection -RemoteAddress $remotePodIP -Port $appInfo.InternalPort | findstr "Succeeded"
+    Log "Start TCP Connection to $remotePodIP : $internalPort"
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $remotePodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $conCount = $testcase.ConnectionCount
+    $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remotePodIP -servicePort $internalPort
-    LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $result
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
 function TestNodeToClusterIP {

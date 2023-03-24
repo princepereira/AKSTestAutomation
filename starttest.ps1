@@ -20,6 +20,7 @@ $TypePingPodToInternet = "PingPodToInternet"
 $TypePingNodeToRemoteNode = "PingNodeToRemoteNode"
 $TypePingNodeToLocalPod = "PingNodeToLocalPod"
 $TypePingNodeToInternet = "PingNodeToInternet"
+$TypeNodeToLocalPod = "NodeToLocalPod"
 $TypeNodeToRemotePod = "NodeToRemotePod"
 
 
@@ -65,6 +66,7 @@ function RunTestcase {
         $TypePingNodeToRemoteNode { TestPingNodeToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePingNodeToLocalPod { TestPingNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePingNodeToInternet { TestPingNodeToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeNodeToLocalPod { TestNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeNodeToRemotePod { TestNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         default {"No Match Found"}
     }
