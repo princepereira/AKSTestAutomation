@@ -45,7 +45,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "ScaleTo" : 6 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "ScaleTo" : 3 } ],
+            "Actions" : [ { "ScaleTo" : 6, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Seq" : 3 }, { "ScaleTo" : 3, "Seq" : 4 } ],
             "Skip" : false
         },
         {
@@ -57,7 +57,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "ScaleTo" : 6 }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "ScaleTo" : 3 } ],
+            "Actions" : [ { "ScaleTo" : 6, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Seq" : 3 }, { "ScaleTo" : 3, "Seq" : 4 } ],
             "Skip" : false
         },
         {
@@ -345,7 +345,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 2 }, { "FailReadinessProbe" : true }, { "Sleep" : 2 }, { "PassReadinessProbe" : true }, { "Sleep" : 2 } ],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 } ],
             "Skip" : false
         },
         {
@@ -356,7 +356,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true }, { "Sleep" : 10 }, { "StartTcpClient" : true } , { "PassReadinessProbe" : true } , { "Sleep" : 2 }  ],
+            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 }, { "StartTcpClient" : true, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
             "Skip" : false
         },
@@ -368,7 +368,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "ScaleTo" : 0 } , { "Sleep" : 4 } , { "ScaleTo" : 1 } ],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 2 } , { "ScaleTo" : 1, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -379,7 +379,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "FailReadinessProbe" : true }, { "Sleep" : 5 }, { "ScaleTo" : 0 } , { "Sleep" : 4 } , { "ScaleTo" : 1 }],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 2 }, { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 3 } , { "ScaleTo" : 1, "Seq" : 4 }],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -391,7 +391,7 @@
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "ScaleTo" : 20 } ],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 20, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -403,7 +403,7 @@
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "ScaleTo" : 2 } ],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 2, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -415,7 +415,7 @@
             "ConnectionCount" : 20,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "StartTcpClient" : true }, { "Sleep" : 5 } , { "ScaleTo" : 0 } ],
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 0, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         },
@@ -438,7 +438,7 @@
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true } , { "Sleep" : 10 } , { "StartTcpClient" : true }, { "Sleep" : 20 }, { "PassReadinessProbe" : true } ],
+            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2, "Sleep" : 20 }, { "PassReadinessProbe" : true, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
             "Skip" : false
         },
@@ -450,7 +450,7 @@
             "ConnectionCount" : 2,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "PassReadinessProbe" : true } , { "Sleep" : 10 } , { "StartTcpClient" : true } ],
+            "Actions" : [ { "PassReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         }

@@ -442,108 +442,6 @@ function TestPodToRemotePod {
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
-function RunActions {
-    param (
-        [Parameter (Mandatory = $true)] [System.Object]$testcase,
-        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
-        [Parameter (Mandatory = $true)] [string]$clientName,
-        [Parameter (Mandatory = $true)] [string]$ipAddress,
-        [Parameter (Mandatory = $true)] [string]$servicePort,
-        [Parameter (Mandatory = $true)] [int]$index,
-        [Parameter (Mandatory = $true)] [bool]$useIPV6,
-        [Parameter (Mandatory = $false)] [bool]$extClient = $false
-    )
-
-
-    $namespace = $appInfo.Namespace
-    $connCount = $testcase.ConnectionCount
-    $requestsPerConnection = $testcase.RequestsPerConnection
-    $timeBtwEachRequestInMs = $testcase.TimeBtwEachRequestInMs
-
-    $startTcpClientCount = 0
-
-    foreach($action in $testcase.Actions) {
-        if($action.$ActionStartTcpClient) {
-            $startTcpClientCount++
-        }
-    }
-
-    # $ipVersion = "IPV4"
-    # if($useIPV6) {
-    #     $ipVersion = "IPV6"
-    # }
-    # $tcaseName = $testcase.Name
-
-    # if($startTcpClientCount -ne 1) {
-    #     $result = "[SKIPPED] Testcase $index : [$ipVersion][$tcaseName] - Result: Validation Failed. One and Only One 'StartTcpClient' Action is Expected"
-    #     Log $result
-    #     Add-content $appInfo.LogPath -value $result
-    #     return "FAILED"
-    # }
-
-    # kubectl exec $clientName -n $namespace -- powershell -command "Remove-Item -Force mylog.txt"
-
-    foreach($action in $testcase.Actions) {
-
-        if($action.$ActionStartTcpClient) { 
-            Log "Start TCP Connection to $ipAddress : $servicePort in background"
-
-            if($extClient) {
-                $Job = Start-Job -ScriptBlock { 
-                    bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4]
-                } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
-            } else {
-                $Job = Start-Job -ScriptBlock {
-                    # $clientName = $args[0]
-                    # $namespace = $args[1]
-                    # $ipAddress = $args[2]
-                    # $servicePort = $args[3]
-                    # $connCount = $args[4]
-                    # $requestsPerConnection = $args[5]
-                    # $timeBtwEachRequestInMs = $args[6]
-                    # kubectl exec $clientName -n $namespace -- powershell -command ".\client.exe -i $ipAddress -p $servicePort -c $connCount -r $requestsPerConnection -d $timeBtwEachRequestInMs | tee mylog.txt"
-                    # Start-Sleep -Seconds 5
-                    # kubectl cp "$clientName:mylog.txt" .\logs\mylog.txt -n $namespace 
-                    kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
-                } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
-            } 
-        }
-
-        if($action.$ActionScaleTo) { ScalePodsInBackground -namespace $appInfo.Namespace -deploymentName $appInfo.ServerDeploymentName -podCount $action.$ActionScaleTo }
-
-        if($action.$ActionSleep) {
-            $sleepTime = $action.$ActionSleep
-            Log "Sleep Action Invoked. Sleeping for $sleepTime seconds."
-            Start-Sleep -Seconds $action.$ActionSleep 
-        }
-
-        if($action.$ActionFailReadinessProbe) { FailReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6 }
-
-        if($action.$ActionPassReadinessProbe) { PassReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6 }
-
-    }
-
-    WaitForPodsToBeReady -namespace $appInfo.Namespace
-
-    Wait-Job $Job
-    $result = Receive-Job $Job
-    Remove-Job $job
-
-    # $res = kubectl exec $clientName -n $appInfo.Namespace -- powershell -command "Get-Content .\mylog.txt | findstr ConnectionsSucceded"
-    # while(($null -eq $res) -or ($res -eq "")) {
-    #     Start-Sleep -Seconds 3
-    #     $res = kubectl exec $clientName -n $appInfo.Namespace -- powershell -command "Get-Content .\mylog.txt | findstr ConnectionsSucceded"
-    # }
-
-    # $result = Get-Content .\logs\mylog.txt
-
-    # Remove-Item .\logs\mylog.txt
-
-    $resultStr = $result | findstr "ConnectionsSucceded"
-    Log ">>>>>>>> : $res"
-    return $resultStr 
-}
-
 function TestPingNodeToRemoteNode {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
@@ -728,4 +626,86 @@ function TestNodeToClusterIP {
     }
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $clusterIP -servicePort $servicePort
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
+function RunActions {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [string]$clientName,
+        [Parameter (Mandatory = $true)] [string]$ipAddress,
+        [Parameter (Mandatory = $true)] [string]$servicePort,
+        [Parameter (Mandatory = $true)] [int]$index,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $false)] [bool]$extClient = $false
+    )
+
+
+    $namespace = $appInfo.Namespace
+    $connCount = $testcase.ConnectionCount
+    $requestsPerConnection = $testcase.RequestsPerConnection
+    $timeBtwEachRequestInMs = $testcase.TimeBtwEachRequestInMs
+
+    $failProbeCount = 0
+
+    $actionCount = ($testcase.Actions).Count
+
+    for($i = 1; $i -le $actionCount; $i++) {
+
+        foreach($action in $testcase.Actions) {
+
+            if($action.Seq -ne $i) {
+                continue
+            }
+            
+            if($action.$ActionStartTcpClient) { 
+                Log "Start TCP Connection to $ipAddress : $servicePort in background"
+    
+                if($extClient) {
+                    $Job = Start-Job -ScriptBlock { 
+                        bin\client.exe -i $args[0] -p $args[1] -c $args[2] -r $args[3] -d $args[4]
+                    } -ArgumentList $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+                } else {
+                    $Job = Start-Job -ScriptBlock {
+                        kubectl exec $args[0] -n $args[1] -- client -i $args[2] -p $args[3] -c $args[4] -r $args[5] -d $args[6]
+                    } -ArgumentList $clientName, $namespace, $ipAddress, $servicePort, $connCount, $requestsPerConnection, $timeBtwEachRequestInMs
+                } 
+            }
+    
+            if($action.$ActionScaleTo) {
+                ScalePodsInBackground -namespace $appInfo.Namespace -deploymentName $appInfo.ServerDeploymentName -podCount $action.$ActionScaleTo 
+            }
+    
+            if($action.$ActionFailReadinessProbe) {
+                FailReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+                $failProbeCount++
+            }
+    
+            if($action.$ActionPassReadinessProbe) {
+                PassReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+                $failProbeCount--
+            }
+
+            if($action.$ActionSleep) {
+                $sleepTime = $action.$ActionSleep
+                Log "Sleep Action Invoked. Sleeping for $sleepTime seconds."
+                Start-Sleep -Seconds $action.$ActionSleep 
+            }
+
+            break
+        }
+    }
+
+    if($failProbeCount -gt 0) {
+        PassReadinessProbeForAllServerPods -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    }
+
+    WaitForPodsToBeReady -namespace $appInfo.Namespace
+
+    Wait-Job $Job
+    $result = Receive-Job $Job
+    Remove-Job $job
+
+    $resultStr = $result | findstr "ConnectionsSucceded"
+    return $resultStr 
 }
