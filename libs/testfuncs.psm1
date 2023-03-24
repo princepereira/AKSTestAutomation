@@ -645,7 +645,7 @@ function TestNodeToLocalPod {
     $internalPort = $appInfo.InternalPort
 
     Log "Start TCP Connection to $podIP : $internalPort"
-    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $podIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- C:\k\client -i $podIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $podIP -servicePort $internalPort
@@ -666,7 +666,7 @@ function TestNodeToRemotePod {
     $internalPort = $appInfo.InternalPort
 
     Log "Start TCP Connection to $remotePodIP : $internalPort"
-    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $remotePodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- C:\k\client -i $remotePodIP -p $internalPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     $conCount = $testcase.ConnectionCount
     $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
     $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remotePodIP -servicePort $internalPort
