@@ -356,7 +356,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 }, { "StartTcpClient" : true, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
+            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 1 }, { "StartTcpClient" : true, "Sleep" : 30, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
             "Skip" : false
         },
