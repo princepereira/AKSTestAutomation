@@ -616,7 +616,7 @@ function TestNodeToClusterIP {
         $result = RunActions -testcase $testcase -appInfo $appInfo -clientName $clientHpc -ipAddress $clusterIP -servicePort $servicePort -useIPV6 $useIPV6 -index $index
     } else {
         Log "Start TCP Connection to $clusterIP : $servicePort "
-        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- C:\k\client -i $clusterIP -p $servicePort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
     }
     
     $conCount = $testcase.ConnectionCount

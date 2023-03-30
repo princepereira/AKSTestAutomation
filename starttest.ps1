@@ -22,6 +22,7 @@ $TypePingNodeToLocalPod = "PingNodeToLocalPod"
 $TypePingNodeToInternet = "PingNodeToInternet"
 $TypeNodeToLocalPod = "NodeToLocalPod"
 $TypeNodeToRemotePod = "NodeToRemotePod"
+$TypeNodeToClusterIP = "NodeToClusterIP"
 
 
 $testConf = Get-Content .\testconf.json | ConvertFrom-Json
@@ -68,6 +69,7 @@ function RunTestcase {
         $TypePingNodeToInternet { TestPingNodeToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeNodeToLocalPod { TestNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeNodeToRemotePod { TestNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeNodeToClusterIP { TestNodeToClusterIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         default {"No Match Found"}
     }
     Log "Testcase $index Execution Completed. [$ipVersion][Testcase : $tcaseName]"

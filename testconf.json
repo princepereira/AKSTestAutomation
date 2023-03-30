@@ -197,6 +197,26 @@
             "Skip" : false
         },
         {
+            "Name" : "Basic Node to Service using Cluster IP-ETPLocal",
+            "Type" : "NodeToClusterIP",
+            "ServiceType" : "ETPLocal",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Node to Service using Cluster IP-ETPCluster",
+            "Type" : "NodeToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
             "Name" : "Basic Pod to Service using NodePort-ETPLocal",
             "Type" : "PodToNodePort",
             "ServiceType" : "ETPLocal",
