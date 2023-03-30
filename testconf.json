@@ -354,6 +354,9 @@
         {
             "Name" : "Basic TNC request from Node to Remote Pod using IPV6 IP",
             "Type" : "NodeToRemotePod",
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 5,
+            "TimeBtwEachRequestInMs" : 100,
             "Skip" : false
         },
         {
