@@ -1,1 +1,2 @@
-[PASSED] Testcase 26 : [IPV6][Pod to Service using Cluster IP [ETP:Cluster]. Failprobe, StartTcp, PassProbe [fda3:2f12:a322:53a5::c9dc : 4444]] - Result: #======= ConnectionsSucceded:0, ConnectionsFailed:4 , Iteration:1 
+[PASSED] Testcase 34 : [IPV6][Pod to Service using Cluster IP [ETP:Cluster][22.1]. StartTcp,ScaleFrom10To0, Connection should Pass [fda3:2f12:a322:53a5::7da6 : 4444]] - Result: #======= ConnectionsSucceded:20, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 35 : [IPV6][Pod to Service using Cluster IP [ETP:Cluster][22.2]. No pods, Connection should fail [fda3:2f12:a322:53a5::7da6 : 4444]] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:0 , Iteration:1 

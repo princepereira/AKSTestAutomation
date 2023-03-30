@@ -467,6 +467,32 @@ function TestPingNodeToRemoteNode {
     LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
 }
 
+function TestPingNodeToRemotePod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $clientName
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $nodeName -deploymentName $appInfo.HpcDaemonsetName
+    $remotePodIP = GetRemoteServerPodIP -namespace $appInfo.Namespace -clientDeploymentName $appInfo.ClientDeploymentName -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+
+    Log "Start Ping Test to $remoteNodeIP"
+    if($useIPV6) {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping -6 $remotePodIP
+    } else {
+        $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- powershell -ExecutionPolicy Unrestricted -command ping $remotePodIP
+    }
+
+    $pingTestSuccess = !(($result | findstr "loss").Contains("100% loss"))
+    $pingTestMessage = "Ping from $clientName to $remotePodIP is Success : $pingTestSuccess."
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $remotePodIP
+    LogPingResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -result $pingTestMessage
+}
+
 function TestPingNodeToInternet {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,

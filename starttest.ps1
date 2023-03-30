@@ -18,6 +18,7 @@ $TypePingPodToLocalNode = "PingPodToLocalNode"
 $TypePingPodToRemoteNode = "PingPodToRemoteNode"
 $TypePingPodToInternet = "PingPodToInternet"
 $TypePingNodeToRemoteNode = "PingNodeToRemoteNode"
+$TypePingNodeToRemotePod = "PingNodeToRemotePod"
 $TypePingNodeToLocalPod = "PingNodeToLocalPod"
 $TypePingNodeToInternet = "PingNodeToInternet"
 $TypeNodeToLocalPod = "NodeToLocalPod"
@@ -70,6 +71,7 @@ function RunTestcase {
         $TypeNodeToLocalPod { TestNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeNodeToRemotePod { TestNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeNodeToClusterIP { TestNodeToClusterIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypePingNodeToRemotePod { TestPingNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         default {"No Match Found"}
     }
     Log "Testcase $index Execution Completed. [$ipVersion][Testcase : $tcaseName]"
