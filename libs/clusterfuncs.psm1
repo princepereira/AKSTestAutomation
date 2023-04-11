@@ -43,7 +43,7 @@ function UninstallCluster {
     )
     Log "AKS Cluster Uninstall Started."
     az account set --subscription $clusterInfo.SubscriptionId
-    az group delete --name $clusterInfo.RgName
+    az group delete --name $clusterInfo.RgName -y
     kubectl config delete-context $clusterInfo.Name
     Log "AKS Cluster Uninstall Completed."
 }
