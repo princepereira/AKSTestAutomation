@@ -539,13 +539,15 @@ function CopyTcpClientToNodes {
         [Parameter (Mandatory = $true)] [String]$namespace,
         [Parameter (Mandatory = $true)] [String]$deploymentName
     )
+    
     $allPodNames = GetAllPodNames -namespace $namespace -deploymentName $deploymentName
     foreach($podName in $allPodNames) {
         $clientExists = kubectl exec $podName -n $namespace -- powershell -command Test-Path C:\k\client.exe
-        if($clientExists) {
+        if($clientExists -eq $true) {
+            Log "Client exists in : $podName"
             continue
         }
-        kubectl cp .\bin\bin.zip $podName:bin.zip -n $namespace
+        kubectl cp .\bin\bin.zip $podName`:bin.zip -n $namespace
         kubectl exec $podName -n $namespace -- powershell -command Expand-Archive -Path bin.zip -DestinationPath .
         kubectl exec $podName -n $namespace -- powershell -command cp .\bin\client.exe C:\k\.
     }
