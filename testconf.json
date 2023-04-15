@@ -29,7 +29,7 @@
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
         "InstallIPv4Required" : false,
-        "InstallIPV6Required" : false,
+        "InstallIPV6Required" : true,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
