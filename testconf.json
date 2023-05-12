@@ -1,16 +1,20 @@
 {
     "ClusterInfo" : {
-        "Name" : "aksAutTest",
-        "RgName" : "pperRgTest",
-        "SubscriptionId" : "0709bd7a-8383-4e1d-98c8-f81d1b3443fc",
+        "Name" : "pperAksIpv6",
+        "RgName" : "pperIpv6Rg",
+        "SubscriptionId" : "8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8",
         "NodePoolName" : "npwin",
         "OsSku" : "Windows2022",
         "NodeCount" : 2,
-        "InstallRequired" : false,
+        "InstallRequired" : true,
         "UninstallAfterTest" : false,
         "ResetClusterCreds" : false,
         "Npm" : "",
-        "Location" : "eastus2euap"
+        "Location" : "centraluseuap",
+        "NwPlugin" : "azure",
+        "NwPluginMode" : "overlay",
+        "K8sVersion" : "1.26.3",
+        "IsDualStack" : true
     },
     "AppInfo" : {
         "Namespace" : "demo",
