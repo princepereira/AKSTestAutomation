@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: hpc-ds-win22
+  name: hpc-ds-win19
   namespace: demo
   labels:
-    app: hpc-ds-win22
+    app: hpc-ds-win19
 spec:
   selector:
     matchLabels:
-      name: hpc-ds-win22
+      name: hpc-ds-win19
   template:
     metadata:
       labels:
-        name: hpc-ds-win22
+        name: hpc-ds-win19
     spec:
       securityContext:
         windowsOptions:
@@ -20,8 +20,8 @@ spec:
           runAsUserName: "NT AUTHORITY\\SYSTEM"
       hostNetwork: true
       containers:
-      - name: hpc-ds-win22
-        image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+      - name: hpc-ds-win19
+        image: mcr.microsoft.com/windows/nanoserver:1809
         command: ["powershell"]
         args: ["while($true)", "{ Sleep 5000 }"]
         imagePullPolicy: IfNotPresent
@@ -33,4 +33,4 @@ spec:
         hostPath:
           path: C:\k
       nodeSelector:
-        kubernetes.azure.com/os-sku: Windows2022
+        kubernetes.azure.com/os-sku: Windows2019

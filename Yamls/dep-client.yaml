@@ -27,7 +27,7 @@ spec:
         app: tcp-client
     spec:
       containers:
-      - image: princepereira/tcp-client-server:WS2022
+      - image: princepereira/tcp-client-server:ws2019
         command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
         imagePullPolicy: Always
         name: tcpudpserver

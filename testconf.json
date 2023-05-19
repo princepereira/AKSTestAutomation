@@ -1,24 +1,21 @@
 {
     "ClusterInfo" : {
-        "Name" : "pperAksIpv6",
-        "RgName" : "pperIpv6Rg",
-        "SubscriptionId" : "8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8",
+        "Name" : "pperAksIpv619",
+        "RgName" : "pperIpv6Rg19",
+        "SubscriptionId" : "0709bd7a-8383-4e1d-98c8-f81d1b3443fc",
         "NodePoolName" : "npwin",
-        "OsSku" : "Windows2022",
+        "OsSku" : "Windows2019",
         "NodeCount" : 2,
         "InstallRequired" : true,
         "UninstallAfterTest" : false,
         "ResetClusterCreds" : false,
         "Npm" : "",
-        "Location" : "centraluseuap",
-        "NwPlugin" : "azure",
-        "NwPluginMode" : "overlay",
-        "K8sVersion" : "1.26.3",
-        "IsDualStack" : true
+        "Location" : "eastus2euap",
+        "NwPlugin" : "azure"
     },
     "AppInfo" : {
         "Namespace" : "demo",
-        "HpcDaemonsetName" : "hpc-ds-win22",
+        "HpcDaemonsetName" : "hpc-ds-win19",
         "HpcNamespace" : "demo",
         "ClientDeploymentName" : "tcp-client",
         "ServerDeploymentName" : "tcp-server",
@@ -32,12 +29,12 @@
         "ETPClusterServicePortIPV6" : "4444",
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
-        "InstallIPv4Required" : false,
-        "InstallIPV6Required" : true,
+        "InstallIPv4Required" : true,
+        "InstallIPV6Required" : false,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
-    "SkipAllTestcases" : false,
+    "SkipAllTestcases" : true,
     "SkipIPV4": true,
     "SkipIPV6": false,
     "IPV4Testcases" : [

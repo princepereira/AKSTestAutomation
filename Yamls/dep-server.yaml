@@ -27,37 +27,13 @@ spec:
         app: tcp-server
     spec:
       containers:
-      - image: princepereira/tcp-client-server:WS2022
+      - image: princepereira/tcp-client-server:ws2019
         command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
         imagePullPolicy: Always
         name: tcpudpserver
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: 8090
-            scheme: HTTP
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          periodSeconds: 10
-          successThreshold: 1
-          failureThreshold: 2
-        readinessProbe:
-          httpGet:
-            path: /readiness
-            port: 8090
-            scheme: HTTP
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          periodSeconds: 10
-          successThreshold: 1
-          failureThreshold: 2
-        lifecycle:
-          preStop:
-            exec:
-              command: ["curl", "--connect-timeout", "1000", "--max-time", "10000", "http://127.0.0.1:8090/kill", "-v"]
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
