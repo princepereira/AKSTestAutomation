@@ -114,6 +114,20 @@ function GetAllPodNames {
     return $podNames
 }
 
+function GetAllWindowsNodeNames {
+    param (
+        [Parameter (Mandatory = $true)] [String]$nodePoolName
+    )
+    $winNodeNames = @()
+    $allNodeNames = ((kubectl get nodes -o json | ConvertFrom-Json).Items).metadata.name
+    foreach($name in $allNodeNames) {
+        if($name.Contains($nodePoolName)) {
+            $winNodeNames += $name
+        }
+    }
+    return $winNodeNames
+}
+
 function GetPodName {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,

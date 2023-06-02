@@ -6,7 +6,7 @@
         "NodePoolName" : "npwin",
         "OsSku" : "Windows2022",
         "NodeCount" : 2,
-        "InstallRequired" : true,
+        "InstallRequired" : false,
         "UninstallAfterTest" : false,
         "ResetClusterCreds" : false,
         "Npm" : "",

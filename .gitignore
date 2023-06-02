@@ -1,0 +1,7 @@
+*.etl
+*.log
+Binaries.zip
+Binaries/*.dll
+Binaries/*.exe
+Binaries/*.sys
+

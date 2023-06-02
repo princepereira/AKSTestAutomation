@@ -597,6 +597,33 @@ function TestNodeToRemotePod {
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
+function TestNodeToHostPort {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    $hostPortPodName = $testcase.HostPortPodName
+    $hostPort = $testcase.HostPort
+    $nodeName = GetNodeNameFromPodName -namespace $appInfo.Namespace -podName $hostPortPodName
+    $nodeIP = GetLocalNodeIP -nodeName $nodeName -useIPV6 $useIPV6
+    $allNodeNames = GetAllWindowsNodeNames -nodePoolName $nodePoolName
+    foreach($name in $allNodeNames) {
+        if($name -ne $nodeName) {
+            $neighbourNode = $name
+            break
+        } 
+    }
+    $clientHpc = GetPodNameFromNode -namespace $appInfo.HpcNamespace -nodeName $neighbourNode -deploymentName $appInfo.HpcDaemonsetName
+    Log "Start TCP Connection to $nodeIP : $hostPort"
+    $result = kubectl exec $clientHpc -n $appInfo.HpcNamespace -- C:\k\client -i $nodeIP -p $hostPort -c $testcase.ConnectionCount -r $testcase.RequestsPerConnection -d $testcase.TimeBtwEachRequestInMs
+    $conCount = $testcase.ConnectionCount
+    $expectedResult = "ConnectionsSucceded:$conCount, ConnectionsFailed:0"
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $nodeIP -servicePort $hostPort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6 -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
 function TestNodeToClusterIP {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,

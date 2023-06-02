@@ -19,3 +19,8 @@ spec:
     port: 4444
     protocol: TCP
     targetPort: 4444
+
+  - name: udp
+    port: 4445
+    protocol: UDP
+    targetPort: 4445
