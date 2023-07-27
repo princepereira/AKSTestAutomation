@@ -27,7 +27,7 @@ spec:
         app: tcp-client
     spec:
       containers:
-      - image: princepereira/tcp-client-server:WS2022
+      - image: princepereira/tcp-client-server:WS2019
         command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
         imagePullPolicy: Always
         name: tcpudpserver
@@ -40,4 +40,4 @@ spec:
       securityContext: {}
       terminationGracePeriodSeconds: 1000
       nodeSelector:
-        kubernetes.io/os: windows
+        kubernetes.azure.com/os-sku: Windows2019

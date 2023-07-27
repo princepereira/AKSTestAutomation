@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tcpserver-hostport
+  namespace: demo
+spec:
+  containers:
+    - name: tcpserver-hostport
+      image: princepereira/tcp-client-server:WS2019
+      command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 4444
+          hostPort: 4488
+  terminationGracePeriodSeconds: 1000
+  nodeSelector:
+    kubernetes.azure.com/os-sku: Windows2019

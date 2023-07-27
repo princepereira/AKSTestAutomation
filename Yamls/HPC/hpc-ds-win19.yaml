@@ -21,7 +21,7 @@ spec:
       hostNetwork: true
       containers:
       - name: hpc-ds-win
-        image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+        image: mcr.microsoft.com/windows/nanoserver:1809
         command: ["powershell"]
         args: ["while($true)", "{ Sleep 5000 }"]
         imagePullPolicy: IfNotPresent
@@ -33,4 +33,4 @@ spec:
         hostPath:
           path: C:\k
       nodeSelector:
-        kubernetes.azure.com/os-sku: Windows2022
+        kubernetes.azure.com/os-sku: Windows2019

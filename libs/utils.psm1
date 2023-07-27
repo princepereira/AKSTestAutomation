@@ -561,8 +561,11 @@ function CopyTcpClientToNodes {
             Log "Client exists in : $podName"
             continue
         }
+        Log "Copying binary zip to : $podName"
         kubectl cp .\bin\bin.zip $podName`:bin.zip -n $namespace
+        Log "Extracting binary zip inside : $podName"
         kubectl exec $podName -n $namespace -- powershell -command Expand-Archive -Path bin.zip -DestinationPath .
+        Log "Copying client.exe to C:\k path in : $podName"
         kubectl exec $podName -n $namespace -- powershell -command cp .\bin\client.exe C:\k\.
     }
 }

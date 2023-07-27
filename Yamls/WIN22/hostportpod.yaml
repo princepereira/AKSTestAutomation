@@ -14,4 +14,4 @@ spec:
           hostPort: 4488
   terminationGracePeriodSeconds: 1000
   nodeSelector:
-        kubernetes.io/os: windows
+    kubernetes.azure.com/os-sku: Windows2022

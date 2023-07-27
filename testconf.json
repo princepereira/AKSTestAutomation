@@ -1,10 +1,10 @@
 {
     "ClusterInfo" : {
-        "Name" : "pperAksIpv6",
-        "RgName" : "pperIpv6Rg",
+        "Name" : "pperAksIpv619",
+        "RgName" : "pperIpv6Rg19",
         "SubscriptionId" : "8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8",
         "NodePoolName" : "npwin",
-        "OsSku" : "Windows2022",
+        "OsSku" : "Windows2019",
         "NodeCount" : 2,
         "InstallRequired" : false,
         "UninstallAfterTest" : false,
@@ -12,13 +12,13 @@
         "Npm" : "",
         "Location" : "centraluseuap",
         "NwPlugin" : "azure",
-        "NwPluginMode" : "overlay",
-        "K8sVersion" : "1.26.3",
-        "IsDualStack" : true
+        "NwPluginMode" : "",
+        "K8sVersion" : "1.25.6",
+        "IsDualStack" : false
     },
     "AppInfo" : {
         "Namespace" : "demo",
-        "HpcDaemonsetName" : "hpc-ds-win22",
+        "HpcDaemonsetName" : "hpc-ds-win",
         "HpcNamespace" : "demo",
         "ClientDeploymentName" : "tcp-client",
         "ServerDeploymentName" : "tcp-server",
@@ -32,70 +32,21 @@
         "ETPClusterServicePortIPV6" : "4444",
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
-        "InstallIPv4Required" : false,
-        "InstallIPV6Required" : true,
+        "InstallIPv4Required" : true,
+        "InstallIPV6Required" : false,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
     "SkipAllTestcases" : false,
-    "SkipIPV4": true,
-    "SkipIPV6": false,
+    "SkipIPV4": false,
+    "SkipIPV6": true,
     "IPV4Testcases" : [
-        {
-            "Name" : "Basic Pod to Service using Cluster IP",
-            "Type" : "PodToClusterIP",
-            "ServiceType" : "ETPCluster",
-            "ServerPodCount" : 4,
-            "ConnectionCount" : 4,
-            "RequestsPerConnection" : 10,
-            "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "ScaleTo" : 6, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Seq" : 3 }, { "ScaleTo" : 3, "Seq" : 4 } ],
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Pod to Service using Cluster IP Service Name",
-            "Type" : "PodToClusterIP",
-            "ServiceType" : "ETPCluster",
-            "DnsName" : "tcp-server-ipv4-cluster.demo.svc.cluster.local",
-            "ServerPodCount" : 4,
-            "ConnectionCount" : 4,
-            "RequestsPerConnection" : 10,
-            "TimeBtwEachRequestInMs" : 1000,
-            "Actions" : [ { "ScaleTo" : 6, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Seq" : 3 }, { "ScaleTo" : 3, "Seq" : 4 } ],
-            "Skip" : false
-        },
         {
             "Name" : "Basic Pod to Local Pod using Pod IP",
             "Type" : "PodToLocalPod",
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Ping Pod to Local Pod using Pod IP",
-            "Type" : "PingPodToLocalPod",
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Ping Pod to Remote Pod using Pod IP",
-            "Type" : "PingPodToRemotePod",
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Ping Pod to Local Node using Node IP",
-            "Type" : "PingPodToLocalNode",
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Ping Pod to Remote Node using Node IP",
-            "Type" : "PingPodToRemoteNode",
-            "Skip" : false
-        },
-        {
-            "Name" : "Basic Ping Pod to Internet using bing.com",
-            "Type" : "PingPodToInternet",
-            "RemoteAddress" : "bing.com", 
             "Skip" : false
         },
         {
@@ -107,7 +58,58 @@
             "Skip" : false
         },
         {
-            "Name" : "Basic Pod to Service using NodePort",
+            "Name" : "Basic Pod to Service using Cluster IP-ETPCluster",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Pod to Service using Cluster IP-ETPCluster",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "DnsName" : "tcp-server-ipv4-cluster.demo.svc.cluster.local",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Pod to Service using Cluster IP-ETPLocal",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPLocal",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Node to Service using Cluster IP-ETPLocal",
+            "Type" : "NodeToClusterIP",
+            "ServiceType" : "ETPLocal",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Node to Service using Cluster IP-ETPCluster",
+            "Type" : "NodeToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Pod to Service using NodePort-ETPLocal",
             "Type" : "PodToNodePort",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -117,7 +119,17 @@
             "Skip" : false
         },
         {
-            "Name" : "Basic Pod to Service using IngressIP",
+            "Name" : "Basic Pod to Service using NodePort-ETPCluster",
+            "Type" : "PodToNodePort",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Pod to Service using IngressIP-ETPLocal",
             "Type" : "PodToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -127,7 +139,27 @@
             "Skip" : false
         },
         {
-            "Name" : "Basic External to Service using IngressIP",
+            "Name" : "Basic Pod to Service using IngressIP-ETPCluster",
+            "Type" : "PodToIngressIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic External to ETPCluster Service using IngressIP",
+            "Type" : "ExternalToIngressIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic External to Service using IngressIP-ETPLocal",
             "Type" : "ExternalToIngressIP",
             "ServiceType" : "ETPLocal",
             "ServerPodCount" : 4,
@@ -137,18 +169,210 @@
             "Skip" : false
         },
         {
-            "Name" : "Basic Pod to Local node",
+            "Name" : "Basic External to Service using IngressIP-ETPCluster",
+            "Type" : "ExternalToIngressIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping Pod to Local node",
             "Type" : "PingPodToLocalNode",
             "Skip" : false
         },
         {
-            "Name" : "Basic Pod to Remote node",
+            "Name" : "Basic Ping Pod to Remote node",
             "Type" : "PingPodToRemoteNode",
             "Skip" : false
         },
         {
-            "Name" : "Basic Pod to Internet",
+            "Name" : "Basic Ping Node to Remote Pod",
+            "Type" : "PingNodeToRemotePod",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TCP connection from Node to Local Pod using Pod IP",
+            "Type" : "NodeToLocalPod",
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TCP connection from Node to Remote Pod using Pod IP",
+            "Type" : "NodeToRemotePod",
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping Test from Pod to Internet using DNS",
+            "Type" : "PingPodToInternet",
+            "RemoteAddress" : "bing.com",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping Test from Pod to Internet using IPV4 IP",
+            "Type" : "PingPodToInternet",
+            "RemoteAddress" : "204.79.197.200",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TNC request from Pod to Internet using DNS",
             "Type" : "PodToInternet",
+            "RemoteAddress" : "bing.com",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TNC request from Pod to Internet using IPV4 IP",
+            "Type" : "PingPodToInternet",
+            "RemoteAddress" : "204.79.197.200",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping from Local Node to Remote Node using IPV4 IP",
+            "Type" : "PingNodeToRemoteNode",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping from Node to Local Pod using IPV4 IP",
+            "Type" : "PingNodeToLocalPod",
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic TNC request from Node to Remote Pod using IPV4 IP",
+            "Type" : "NodeToRemotePod",
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 5,
+            "TimeBtwEachRequestInMs" : 100,
+            "Skip" : false
+        },
+        {
+            "Name" : "Basic Ping Request from Node to Internet using IPV4 IP",
+            "Type" : "PingNodeToInternet",
+            "RemoteAddress" : "bing.com",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, FailProbe, PassProbe",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 } ],
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. Failprobe, StartTcp, PassProbe",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 4,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 1 }, { "StartTcpClient" : true, "Sleep" : 30, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
+            "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, Deletepod, Connection should Pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 1,
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 2 } , { "ScaleTo" : 1, "Seq" : 3 } ],
+            "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][19]. StartTcp, FailReadiness, DeletePod, Connection should Pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ConnectionCount" : 4,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 2 }, { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 3 } , { "ScaleTo" : 1, "Seq" : 4 }],
+            "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][20]. StartTcp,ScaleFrom2To20, Connection should Pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 2,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 20, "Seq" : 2 } ],
+            "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][21]. StartTcp,ScaleFrom20To2, Connection should Pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 20,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 2, "Seq" : 2 } ],
+            "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.1]. StartTcp,ScaleFrom10To0, Connection should Pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 10,
+            "ConnectionCount" : 20,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "StartTcpClient" : true, "Sleep" : 15, "Seq" : 1 } , { "ScaleTo" : 0, "Seq" : 2 } ],
+            "ExpectedResult" : "ConnectionsSucceded:20, ConnectionsFailed:0",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.2]. No pods, Connection should fail",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 2,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "ScaleTo" : 0, "Seq" : 1, "Sleep" : 15 }, { "StartTcpClient" : true, "Seq" : 2 } ],
+            "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.1]. FailReadinessProbe, StartTcpClient, PassReadinessProbe, Connections should fail",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 1,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2, "Sleep" : 20 }, { "PassReadinessProbe" : true, "Seq" : 3 } ],
+            "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
+            "Skip" : false
+        },
+        {
+            "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.2]. PassReadinessProbe, StartTcpClient, Connections should pass",
+            "Type" : "PodToClusterIP",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 1,
+            "ConnectionCount" : 2,
+            "RequestsPerConnection" : 10,
+            "TimeBtwEachRequestInMs" : 1000,
+            "Actions" : [ { "PassReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2 } ],
+            "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
             "Skip" : false
         }
     ],

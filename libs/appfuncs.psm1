@@ -2,20 +2,29 @@ Import-Module -Force .\libs\utils.psm1
 
 function InstallApps {
     param (
+        [Parameter (Mandatory = $true)] [System.Object]$clusterInfo,
         [Parameter (Mandatory = $true)] [System.Object]$appInfo
     )
     Log "App Install Started."
     $namespace = $appInfo.Namespace
     kubectl create namespace $namespace
 
-    if(($appInfo.HpcDaemonsetName).Contains("22")) {
+    if(($null -eq $clusterInfo.OsSku) -or ($clusterInfo.OsSku -ne "Windows2019")) {
         kubectl create -f .\Yamls\HPC\hpc-ds-win22.yaml
         if(!(WaitForPodsToBeReady -namespace $appInfo.HpcNamespace)) {
             Log "Containers didn't come up."
             return $false
         }
-        CopyTcpClientToNodes -namespace $appInfo.HpcNamespace -deploymentName $appInfo.HpcDaemonsetName
+        
+    } else {
+        kubectl create -f .\Yamls\HPC\hpc-ds-win19.yaml
+        if(!(WaitForPodsToBeReady -namespace $appInfo.HpcNamespace)) {
+            Log "Containers didn't come up."
+            return $false
+        }
     }
+
+    CopyTcpClientToNodes -namespace $appInfo.HpcNamespace -deploymentName $appInfo.HpcDaemonsetName
 
     if($appInfo.InstallIPv4Required) {
         kubectl create -f .\Yamls\IPV4
@@ -25,7 +34,12 @@ function InstallApps {
         kubectl create -f .\Yamls\IPV6
     }
 
-    kubectl create -f .\Yamls
+    if(($null -eq $clusterInfo.OsSku) -or ($clusterInfo.OsSku -ne "Windows2019")) {
+        kubectl create -f .\Yamls\WIN22
+    } else {
+        kubectl create -f .\Yamls\WIN19
+    }
+
     if(!(WaitForPodsToBeReady -namespace $namespace)) {
         Log "Containers didn't come up."
         return $false
@@ -46,7 +60,7 @@ function UninstallApps {
         [Parameter (Mandatory = $true)] [String]$namespace
     )
     Log "App Uninstall Started."
-    kubectl delete -f .\Yamls
+    kubectl delete -f .\Yamls\WIN22
     kubectl delete -f .\Yamls\IPV4
     kubectl delete -f .\Yamls\IPV6
     kubectl delete -f .\Yamls\HPC

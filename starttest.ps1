@@ -94,7 +94,7 @@ if($clusterInfo.ResetClusterCreds) {
 
 # Setup Apps
 if($appInfo.InstallIPv4Required -or $appInfo.InstallIPv6Required) {
-    InstallApps -appInfo $appInfo
+    InstallApps -clusterInfo $clusterInfo -appInfo $appInfo
 } else {
     Log "Skipping App Install."
 }

@@ -14,7 +14,8 @@ $ReplaceTcpIpSys = $false
 $ReplaceNetioSys = $false
 $SetRegKeys = $false
 
-$HpcName = "hpc-ds-win22"
+$HpcName = "hpc-ds-win"
+$WinVersion = "2022" # 2022 / 2019
 $Namespace = "demo"
 
 $RegKeys = @(
@@ -24,22 +25,28 @@ $RegKeys = @(
 )
 
 function ValidateHPC {
-    $result = kubectl get daemonset hpc-ds-win22 -n demo
+    $result = kubectl get daemonset hpc-ds-win -n demo
     if($null -ne $result) {
         return $true
     }
     kubectl create namespace demo
-    kubectl create -f .\Yamls\HPC\hpc-ds-win22.yaml
+
+    if($WinVersion -eq "2022") {
+        kubectl create -f .\Yamls\HPC\hpc-ds-win22.yaml
+    } else {
+        kubectl create -f .\Yamls\HPC\hpc-ds-win19.yaml
+    }
+    
     Start-Sleep -Seconds 5
-    $result = kubectl get daemonset hpc-ds-win22 -n demo -o json | ConvertFrom-Json
+    $result = kubectl get daemonset hpc-ds-win -n demo -o json | ConvertFrom-Json
     if($result.status.desiredNumberScheduled -eq 0) {
         Write-Host "HPC daemonset cannot be brought up. Desired pods are zero." -ForegroundColor Red
-        kubectl delete -f .\Yamls\HPC\hpc-ds-win22.yaml
+        kubectl delete -f .\Yamls\HPC\
         return $false
     }
     $count = 0
     While($true) {
-        $result = kubectl get daemonset hpc-ds-win22 -n demo -o json | ConvertFrom-Json
+        $result = kubectl get daemonset hpc-ds-win -n demo -o json | ConvertFrom-Json
         $status = $result.status
         if($status.desiredNumberScheduled -eq $status.numberReady) {
             Start-Sleep -Seconds 5
@@ -49,7 +56,7 @@ function ValidateHPC {
         $count += 1
         if($coun -gt 48) {
             Write-Host "HPC daemonset cannot be brought up. Took more time." -ForegroundColor Red
-            kubectl delete -f .\Yamls\HPC\hpc-ds-win22.yaml
+            kubectl delete -f .\Yamls\HPC
             return $false
         }
         Start-Sleep -Seconds 5

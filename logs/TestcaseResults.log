@@ -1,1 +1,27 @@
-[PASSED] Testcase 26 : [IPV6][Basic TNC request from Node to Remote Pod using IPV6 IP [fdd2:1a38:fded:b004::18b : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[PASSED] Testcase 1 : [IPV4][Basic Pod to Local Pod using Pod IP [10.244.1.60 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[PASSED] Testcase 2 : [IPV4][Basic Pod to Remote Pod using Pod IP [10.244.2.183 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[PASSED] Testcase 3 : [IPV4][Basic Pod to Service using Cluster IP-ETPCluster [10.0.54.110 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 4 : [IPV4][Basic Pod to Service using Cluster IP-ETPCluster [tcp-server-ipv6-cluster.demo.svc.cluster.local : 4444]] - Result: #======= ConnectionsSucceded:0, ConnectionsFailed:4 , Iteration:1 
+[PASSED] Testcase 5 : [IPV4][Basic Pod to Service using Cluster IP-ETPLocal [10.0.238.226 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 6 : [IPV4][Basic Node to Service using Cluster IP-ETPLocal [10.0.238.226 : 4444]] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:2 , Iteration:1 
+[FAILED] Testcase 7 : [IPV4][Basic Node to Service using Cluster IP-ETPCluster [10.0.54.110 : 4444]] - Result: #======= ConnectionsSucceded:0, ConnectionsFailed:4 , Iteration:1 
+[PASSED] Testcase 10 : [IPV4][Basic Pod to Service using IngressIP-ETPLocal [20.51.26.227 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 11 : [IPV4][Basic Pod to Service using IngressIP-ETPCluster [20.51.26.76 : 4444]] - Result: #======= ConnectionsSucceded:3, ConnectionsFailed:1 , Iteration:1 
+[PASSED] Testcase 12 : [IPV4][Basic External to ETPCluster Service using IngressIP [20.51.26.76 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 13 : [IPV4][Basic External to Service using IngressIP-ETPLocal [20.51.26.227 : 4444]] - Result: #======= ConnectionsSucceded:1, ConnectionsFailed:3 , Iteration:1 
+[FAILED] Testcase 14 : [IPV4][Basic External to Service using IngressIP-ETPCluster [20.51.26.76 : 4444]] - Result: #======= ConnectionsSucceded:3, ConnectionsFailed:1 , Iteration:1 
+[PASSED] Testcase 15 : [IPV4][Basic Ping Pod to Local node] - Result: Ping from tcp-client-6844d476bd-jvhnq to 10.224.0.6 is Success : True.
+[PASSED] Testcase 16 : [IPV4][Basic Ping Pod to Remote node] - Result: Ping from tcp-client-6844d476bd-jvhnq to  is Success : True.
+[FAILED] Testcase 17 : [IPV4][Basic Ping Node to Remote Pod [10.244.1.14]] - Result: Ping from tcp-client-6844d476bd-jvhnq to 10.244.1.14 is Success : False.
+[PASSED] Testcase 18 : [IPV4][Basic TCP connection from Node to Local Pod using Pod IP [10.244.2.80 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[PASSED] Testcase 19 : [IPV4][Basic TCP connection from Node to Remote Pod using Pod IP [10.244.1.169 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 20 : [IPV4][Basic Ping Test from Pod to Internet using DNS] - Result: Ping from tcp-client-6844d476bd-jvhnq to  is Success : .
+[FAILED] Testcase 21 : [IPV4][Basic Ping Test from Pod to Internet using IPV6 IP] - Result: Ping from tcp-client-6844d476bd-jvhnq to  is Success : False.
+[FAILED] Testcase 22 : [IPV4][Basic TNC request from Pod to Internet using DNS [bing.com]] - Result: DNS resolution to bing.com failed
+[FAILED] Testcase 23 : [IPV4][Basic TNC request from Pod to Internet using IPV6 IP] - Result: Ping from tcp-client-6844d476bd-jvhnq to  is Success : False.
+[PASSED] Testcase 24 : [IPV4][Basic Ping from Local Node to Remote Node using IPV6 IP [10.224.0.5]] - Result: Ping from tcp-client-6844d476bd-jvhnq to  is Success : True.
+[PASSED] Testcase 25 : [IPV4][Basic Ping from Node to Local Pod using IPV6 IP [10.244.2.80]] - Result: Ping from tcp-client-6844d476bd-jvhnq to 10.244.2.80 is Success : True.
+[PASSED] Testcase 26 : [IPV4][Basic TNC request from Node to Remote Pod using IPV6 IP [10.244.1.169 : 4444]] - Result: #======= ConnectionsSucceded:2, ConnectionsFailed:0 , Iteration:1 
+[FAILED] Testcase 27 : [IPV4][[Node:aksnpwin000000]Basic Ping Request from Node to Internet using IPV6 IP [aksnpwin000000 -> bing.com]] - Result: Ping from aksnpwin000000 [HPC: hpc-ds-win22-46t24] to Internet [bing.com] is Success : False.
+[FAILED] Testcase 27 : [IPV4][[Node:aksnpwin000001]Basic Ping Request from Node to Internet using IPV6 IP [aksnpwin000001 -> bing.com]] - Result: Ping from aksnpwin000001 [HPC: hpc-ds-win22-ddwdz] to Internet [bing.com] is Success : False.
+[PASSED] Testcase 28 : [IPV4][Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, FailProbe, PassProbe [10.0.54.110 : 4444]] - Result: #======= ConnectionsSucceded:4, ConnectionsFailed:0 , Iteration:1 
