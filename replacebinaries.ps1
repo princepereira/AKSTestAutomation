@@ -3,15 +3,16 @@ $DirPath = "Binaries"
 
 $CreateZip = $true
 $CopyBinaries = $true
-$EnableTestSigning = $true
-$ReplaceHns = $false
+$KeepOriginal = $false # This will replace the selected binaries with original binaries
+$EnableTestSigning = $false
+$ReplaceHns = $true
 $ReplaceVfpCtrl = $false
 $ReplaceVfpExt = $false
 $ReplaceVfpApi = $false
 $ReplaceKubeProxy = $false
 $ReplaceAzureVnet = $false
-$ReplaceTcpIpSys = $true
-$ReplaceNetioSys = $true
+$ReplaceTcpIpSys = $false
+$ReplaceNetioSys = $false
 $SetRegKeys = $false
 $RunPSScript = $false
 
@@ -26,7 +27,7 @@ $RegKeys = @(
 )
 
 $ScriptName = "removeArp.ps1"
-$ScriptNodeDstPath = "C:\k\removeArp.ps1"
+$ScriptNodeDstPath = "C:\k"
 $ScriptCmd = "C:\k\removeArp.ps1"
 
 function ValidateHPC {
@@ -191,20 +192,21 @@ foreach($hpcPod in $allHpcPods) {
     }
     
     # Taking Backup of originals
-    $origDirExists = kubectl exec $hpcPod -n $Namespace -- powershell -command Test-Path orig
+    $origDirExists = kubectl exec $hpcPod -n $Namespace -- powershell -command Test-Path C:\k\orig
     if($origDirExists -eq $false) {
         Write-Host "Taking backup of original binaries : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command mkdir orig
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azure-vnet.json .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\netconf\10-azure.conflist .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpctrl.exe .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\hostnetsvc.dll .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\bin\azure-vnet.exe .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\vfpext.sys .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\tcpip.sys .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\netio.sys .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpapi.dll .\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\kube-proxy.exe .\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command mkdir C:\k\orig
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp Binaries\sfpcopy.exe C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azure-vnet.json C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\netconf\10-azure.conflist C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpctrl.exe C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\hostnetsvc.dll C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\bin\azure-vnet.exe C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\vfpext.sys C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\tcpip.sys C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\netio.sys C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpapi.dll C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\kube-proxy.exe C:\k\orig\
     }
 
     if($SetRegKeys) {
@@ -218,8 +220,13 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceAzureVnet) {
-        Write-Host "Replacing azure vnet in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp .\Binaries\azure-vnet.exe C:\k\azurecni\bin\azure-vnet.exe
+        if($KeepOriginal) {
+            Write-Host "Replacing with original azure vnet in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\orig\azure-vnet.exe C:\k\azurecni\bin\azure-vnet.exe
+        } else {
+            Write-Host "Replacing with custom azure vnet in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp .\Binaries\azure-vnet.exe C:\k\azurecni\bin\azure-vnet.exe
+        }
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command rm C:\k\azure-vnet.json -ErrorAction Ignore
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command "Get-HnsNetwork | Where name -eq azure | Remove-HnsNetwork"
         Write-Host "FileHash for azure vnet : $hpcPod"
@@ -227,8 +234,13 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceHns) {
-        Write-Host "Replacing hns in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\HostNetSvc.dll C:\Windows\system32\hostnetsvc.dll
+        if($KeepOriginal) {
+            Write-Host "Replacing with original hns in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\HostNetSvc.dll C:\Windows\system32\hostnetsvc.dll
+        } else {
+            Write-Host "Replacing with custom hns in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\HostNetSvc.dll C:\Windows\system32\hostnetsvc.dll
+        }
         Start-Sleep -Seconds 3
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Service -f hns
         Start-Sleep -Seconds 2
@@ -238,8 +250,13 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceVfpExt) {
-        Write-Host "Replacing vfpext.sys in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpext.sys C:\Windows\system32\drivers\vfpext.sys
+        if($KeepOriginal) {
+            Write-Host "Replacing with original vfpext.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\vfpext.sys C:\Windows\system32\drivers\vfpext.sys
+        } else {
+            Write-Host "Replacing with custom vfpext.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpext.sys C:\Windows\system32\drivers\vfpext.sys
+        }
         Start-Sleep -Seconds 2
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Service -f vfpext
         Start-Sleep -Seconds 2
@@ -249,38 +266,63 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceTcpIpSys) {
-        Write-Host "Replacing tcpip.sys in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\tcpip.sys C:\Windows\system32\drivers\tcpip.sys
+        if($KeepOriginal) {
+            Write-Host "Replacing with original tcpip.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\tcpip.sys C:\Windows\system32\drivers\tcpip.sys
+        } else {
+            Write-Host "Replacing with custom tcpip.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\tcpip.sys C:\Windows\system32\drivers\tcpip.sys
+        }
         Start-Sleep -Seconds 3
         Write-Host "FileHash for tcpip.sys : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\drivers\tcpip.sys
     }
 
     if($ReplaceNetioSys) {
-        Write-Host "Replacing netio.sys in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\netio.sys C:\Windows\system32\drivers\netio.sys
+        if($KeepOriginal) {
+            Write-Host "Replacing with original netio.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\netio.sys C:\Windows\system32\drivers\netio.sys
+        } else {
+            Write-Host "Replacing with custom netio.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\netio.sys C:\Windows\system32\drivers\netio.sys
+        }
         Start-Sleep -Seconds 3
         Write-Host "FileHash for netio.sys : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\drivers\netio.sys
     }
 
     if($ReplaceVfpApi) {
-        Write-Host "Replacing vfpapi.dll in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpapi.dll C:\Windows\system32\vfpapi.dll
+        if($KeepOriginal) {
+            Write-Host "Replacing with original vfpapi.dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\vfpapi.dll C:\Windows\system32\vfpapi.dll
+        } else {
+            Write-Host "Replacing with custom vfpapi.dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpapi.dll C:\Windows\system32\vfpapi.dll
+        }
         Write-Host "FileHash for vfpapi.dll : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\vfpapi.dll
     }
 
     if($ReplaceVfpCtrl) {
-        Write-Host "Replacing vfpctrl in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpctrl.exe C:\Windows\system32\vfpctrl.exe
+        if($KeepOriginal) {
+            Write-Host "Replacing with original vfpctrl in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\vfpctrl.exe C:\Windows\system32\vfpctrl.exe
+        } else {
+            Write-Host "Replacing with custom vfpctrl in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\vfpctrl.exe C:\Windows\system32\vfpctrl.exe
+        }
         Write-Host "FileHash for vfpctrl : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\vfpctrl.exe
     }
 
     if($ReplaceKubeProxy) {
-        Write-Host "Replacing KubeProxy in : $hpcPod"
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\kube-proxy.exe C:\k\kube-proxy.exe
+        if($KeepOriginal) {
+            Write-Host "Replacing with original KubeProxy in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\kube-proxy.exe C:\k\kube-proxy.exe
+        } else {
+            Write-Host "Replacing with custom KubeProxy in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\kube-proxy.exe C:\k\kube-proxy.exe
+        }
         Start-Sleep -Seconds 2
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Service -f kubeproxy
         Start-Sleep -Seconds 2
@@ -289,7 +331,7 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\k\kube-proxy.exe
     }
 
-    if($ReplaceTcpIpSys -or $ReplaceNetioSys) {
+    if($ReplaceVfpExt -or $ReplaceTcpIpSys -or $ReplaceNetioSys) {
         Write-Host "Restarting the node : $hpcPod initiated in 3 seconds."
         Start-Sleep -Seconds 3
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Computer -Force
@@ -300,7 +342,7 @@ foreach($hpcPod in $allHpcPods) {
     if($RunPSScript) {
         Write-Host "Running powershell script $ScriptName in : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp .\Binaries\$ScriptName $ScriptNodeDstPath\$ScriptName
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command "$ScriptCmd"
-        Write-Host "Running powershell script $ScriptName in : $hpcPodd completed."
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted "Start-Job -FilePath $ScriptCmd"
+        Write-Host "Running powershell script $ScriptName in : $hpcPod completed."
     }
 }
