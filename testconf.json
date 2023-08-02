@@ -1,10 +1,10 @@
 {
     "ClusterInfo" : {
-        "Name" : "pperAksIpv619",
-        "RgName" : "pperIpv6Rg19",
-        "SubscriptionId" : "8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8",
+        "Name" : "pperAksIpv6",
+        "RgName" : "pperIpv6Rg",
+        "SubscriptionId" : "9bd7ff15-396a-4478-a89b-4d8ae7e302b6",
         "NodePoolName" : "npwin",
-        "OsSku" : "Windows2019",
+        "OsSku" : "Windows2022",
         "NodeCount" : 2,
         "InstallRequired" : false,
         "UninstallAfterTest" : false,
@@ -12,9 +12,9 @@
         "Npm" : "",
         "Location" : "centraluseuap",
         "NwPlugin" : "azure",
-        "NwPluginMode" : "",
-        "K8sVersion" : "1.25.6",
-        "IsDualStack" : false
+        "NwPluginMode" : "overlay",
+        "K8sVersion" : "1.26.3",
+        "IsDualStack" : true
     },
     "AppInfo" : {
         "Namespace" : "demo",
@@ -32,14 +32,14 @@
         "ETPClusterServicePortIPV6" : "4444",
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
-        "InstallIPv4Required" : true,
-        "InstallIPV6Required" : false,
+        "InstallIPv4Required" : false,
+        "InstallIPV6Required" : true,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
     "SkipAllTestcases" : false,
-    "SkipIPV4": false,
-    "SkipIPV6": true,
+    "SkipIPV4": true,
+    "SkipIPV6": false,
     "IPV4Testcases" : [
         {
             "Name" : "Basic Pod to Local Pod using Pod IP",
