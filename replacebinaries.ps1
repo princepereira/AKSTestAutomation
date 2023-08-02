@@ -3,16 +3,17 @@ $DirPath = "Binaries"
 
 $CreateZip = $true
 $CopyBinaries = $true
-$EnableTestSigning = $false
-$ReplaceHns = $true
+$EnableTestSigning = $true
+$ReplaceHns = $false
 $ReplaceVfpCtrl = $false
 $ReplaceVfpExt = $false
 $ReplaceVfpApi = $false
 $ReplaceKubeProxy = $false
 $ReplaceAzureVnet = $false
-$ReplaceTcpIpSys = $false
-$ReplaceNetioSys = $false
+$ReplaceTcpIpSys = $true
+$ReplaceNetioSys = $true
 $SetRegKeys = $false
+$RunPSScript = $false
 
 $HpcName = "hpc-ds-win"
 $WinVersion = "2022" # 2022 / 2019
@@ -23,6 +24,10 @@ $RegKeys = @(
     "reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\VfpExt\Parameters /v VfpIpv6DipsPrintingIsEnabled /t REG_DWORD /d 1 /f",
     "reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\hns\State /v HnsTcpNodeToClusterIPChange /t REG_DWORD /d 1 /f"
 )
+
+$ScriptName = "removeArp.ps1"
+$ScriptNodeDstPath = "C:\k\removeArp.ps1"
+$ScriptCmd = "C:\k\removeArp.ps1"
 
 function ValidateHPC {
     $result = kubectl get daemonset hpc-ds-win -n demo
@@ -131,6 +136,11 @@ function ValidateBinariesDir {
 
     if($missingBins.Count -gt 0) {
         Write-Host "Missing binaries in dir [$DirPath] : $missingBins"
+        return $false
+    }
+
+    if($RunPSScript -and ((Test-Path $DirPath\$ScriptName) -eq $false)) {
+        Write-Host "Missing Powershell script: $DirPath\$ScriptName"
         return $false
     }
 
@@ -279,11 +289,18 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\k\kube-proxy.exe
     }
 
-    Write-Host "Setting up host pod : $hpcPod completed"
-
     if($ReplaceTcpIpSys -or $ReplaceNetioSys) {
         Write-Host "Restarting the node : $hpcPod initiated in 3 seconds."
         Start-Sleep -Seconds 3
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Computer -Force
+    }
+
+    Write-Host "Setting up host pod : $hpcPod completed"
+
+    if($RunPSScript) {
+        Write-Host "Running powershell script $ScriptName in : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp .\Binaries\$ScriptName $ScriptNodeDstPath\$ScriptName
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command "$ScriptCmd"
+        Write-Host "Running powershell script $ScriptName in : $hpcPodd completed."
     }
 }
