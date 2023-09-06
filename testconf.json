@@ -5,15 +5,18 @@
         "SubscriptionId" : "9bd7ff15-396a-4478-a89b-4d8ae7e302b6",
         "NodePoolName" : "npwin",
         "OsSku" : "Windows2022",
+        "NodeUsername" : "azureuser",
+        "NodePassword" : "azureuser@123456",
         "NodeCount" : 2,
-        "InstallRequired" : false,
+        "InstallRequired" : true,
         "UninstallAfterTest" : false,
-        "ResetClusterCreds" : false,
+        "ResetClusterCreds" : true,
         "Npm" : "",
         "Location" : "centraluseuap",
         "NwPlugin" : "azure",
         "NwPluginMode" : "overlay",
         "K8sVersion" : "1.26.3",
+        "EnableRdp" : true,
         "IsDualStack" : true
     },
     "AppInfo" : {
@@ -32,13 +35,13 @@
         "ETPClusterServicePortIPV6" : "4444",
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
-        "InstallIPv4Required" : false,
+        "InstallIPv4Required" : true,
         "InstallIPV6Required" : true,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
     "SkipAllTestcases" : false,
-    "SkipIPV4": true,
+    "SkipIPV4": false,
     "SkipIPV6": false,
     "IPV4Testcases" : [
         {

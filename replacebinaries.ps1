@@ -4,31 +4,38 @@ $DirPath = "Binaries"
 $CreateZip = $true
 $CopyBinaries = $true
 $KeepOriginal = $false # This will replace the selected binaries with original binaries
-$EnableTestSigning = $false
+$EnableTestSigning = $true
 $ReplaceHns = $true
 $ReplaceVfpCtrl = $false
 $ReplaceVfpExt = $false
 $ReplaceVfpApi = $false
 $ReplaceKubeProxy = $false
 $ReplaceAzureVnet = $false
-$ReplaceTcpIpSys = $false
-$ReplaceNetioSys = $false
+$ReplaceIpHelperApiDll = $true
+$ReplaceMpsSvcDll = $true
+$ReplaceNetVscSys = $true
+$ReplaceTcpIpSys = $true
+$ReplaceNetioSys = $true
 $SetRegKeys = $false
 $RunPSScript = $false
+$CopyFile = $false
+
 
 $HpcName = "hpc-ds-win"
 $WinVersion = "2022" # 2022 / 2019
 $Namespace = "demo"
 
 $RegKeys = @(
-    "reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\hns\State /v HNSLbNatDupRuleChange /t REG_DWORD /d 1 /f", 
-    "reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\VfpExt\Parameters /v VfpIpv6DipsPrintingIsEnabled /t REG_DWORD /d 1 /f",
-    "reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\hns\State /v HnsTcpNodeToClusterIPChange /t REG_DWORD /d 1 /f"
+    # "Set-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SDNIpv6DefaultGw -Value 'fe80::1234:5678:9abc'"
+    "Set-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SdnGatewayArpMac -Value '12-34-56-78-9a-bc'"
 )
 
 $ScriptName = "removeArp.ps1"
 $ScriptNodeDstPath = "C:\k"
 $ScriptCmd = "C:\k\removeArp.ps1"
+
+$FileName = "TTD.zip"
+$FileDstPath = "C:\k"
 
 function ValidateHPC {
     $result = kubectl get daemonset hpc-ds-win -n demo
@@ -115,6 +122,18 @@ function ValidateBinariesDir {
         $missingBins += "tcpip.sys"
     }
 
+    if($ReplaceIpHelperApiDll  -and ((Test-Path $DirPath\iphlpapi.dll) -eq $false)) {
+        $missingBins += "iphlpapi.dll"
+    }
+
+    if($ReplaceMpsSvcDll  -and ((Test-Path $DirPath\MPSSVC.dll) -eq $false)) {
+        $missingBins += "MPSSVC.dll"
+    }
+
+    if($ReplaceNetVscSys -and ((Test-Path $DirPath\netvsc.sys) -eq $false)) {
+        $missingBins += "netvsc.sys"
+    }
+
     if($ReplaceNetioSys -and ((Test-Path $DirPath\netio.sys) -eq $false)) {
         $missingBins += "netio.sys"
     }
@@ -127,7 +146,7 @@ function ValidateBinariesDir {
         $missingBins += "azure-vnet.exe"
     }
 
-    if($ReplaceHns -or $ReplaceVfpCtrl -or $ReplaceVfpExt -or $ReplaceVfpApi -or $ReplaceKubeProxy -or $ReplaceTcpIpSys -or $ReplaceNetioSys) {
+    if($ReplaceHns -or $ReplaceVfpCtrl -or $ReplaceVfpExt -or $ReplaceVfpApi -or $ReplaceKubeProxy -or $ReplaceTcpIpSys -or $ReplaceNetioSys -or $ReplaceNetVscSys) {
         $sfpcopyNeeded = $true
     }
 
@@ -142,6 +161,11 @@ function ValidateBinariesDir {
 
     if($RunPSScript -and ((Test-Path $DirPath\$ScriptName) -eq $false)) {
         Write-Host "Missing Powershell script: $DirPath\$ScriptName"
+        return $false
+    }
+
+    if($CopyFile -and ((Test-Path $DirPath\$FileName) -eq $false)) {
+        Write-Host "Missing file to copy: $DirPath\$FileName"
         return $false
     }
 
@@ -168,6 +192,8 @@ if($EnableTestSigning) {
         Write-Host "Enabling test signing on : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command SET NT_SIGNCODE=1
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command bcdedit.exe /set testsigning ON
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command bcdedit.exe /debug off
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command bcdedit.exe /bootdebug off
         Write-Host "Restarting the node : $hpcPod initiated in 3 seconds."
         Start-Sleep -Seconds 2
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Computer -Force
@@ -219,6 +245,8 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\VfpExt\Parameters
     }
 
+    $restartNode = $false
+
     if($ReplaceAzureVnet) {
         if($KeepOriginal) {
             Write-Host "Replacing with original azure vnet in : $hpcPod"
@@ -248,8 +276,37 @@ foreach($hpcPod in $allHpcPods) {
         Write-Host "FileHash for hns : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\hostnetsvc.dll
     }
+    
+    if($ReplaceIpHelperApiDll) {
+        $restartNode = $true
+        if($KeepOriginal) {
+            Write-Host "Replacing with original IP Helper Dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\iphlpapi.dll C:\Windows\system32\iphlpapi.dll
+        } else {
+            Write-Host "Replacing with custom IP Helper Dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\iphlpapi.dll C:\Windows\system32\iphlpapi.dll
+        }
+        Start-Sleep -Seconds 3
+        Write-Host "FileHash for iphlpapi : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\iphlpapi.dll
+    }
+
+    if($ReplaceMpsSvcDll ) {
+        $restartNode = $true
+        if($KeepOriginal) {
+            Write-Host "Replacing with original MPSSVC Dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\MPSSVC.dll C:\Windows\system32\MPSSVC.dll
+        } else {
+            Write-Host "Replacing with custom MPSSVC Dll in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\MPSSVC.dll C:\Windows\system32\MPSSVC.dll
+        }
+        Start-Sleep -Seconds 3
+        Write-Host "FileHash for MPSSVC : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\MPSSVC.dll
+    }
 
     if($ReplaceVfpExt) {
+        $restartNode = $true
         if($KeepOriginal) {
             Write-Host "Replacing with original vfpext.sys in : $hpcPod"
             kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\vfpext.sys C:\Windows\system32\drivers\vfpext.sys
@@ -266,6 +323,7 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceTcpIpSys) {
+        $restartNode = $true
         if($KeepOriginal) {
             Write-Host "Replacing with original tcpip.sys in : $hpcPod"
             kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\tcpip.sys C:\Windows\system32\drivers\tcpip.sys
@@ -279,6 +337,7 @@ foreach($hpcPod in $allHpcPods) {
     }
 
     if($ReplaceNetioSys) {
+        $restartNode = $true
         if($KeepOriginal) {
             Write-Host "Replacing with original netio.sys in : $hpcPod"
             kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\netio.sys C:\Windows\system32\drivers\netio.sys
@@ -289,6 +348,20 @@ foreach($hpcPod in $allHpcPods) {
         Start-Sleep -Seconds 3
         Write-Host "FileHash for netio.sys : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\drivers\netio.sys
+    }
+
+    if($ReplaceNetVscSys ) {
+        $restartNode = $true
+        if($KeepOriginal) {
+            Write-Host "Replacing with original netvsc.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\netvsc.sys C:\Windows\system32\drivers\netvsc.sys
+        } else {
+            Write-Host "Replacing with custom netvsc.sys in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\netvsc.sys C:\Windows\system32\drivers\netvsc.sys
+        }
+        Start-Sleep -Seconds 3
+        Write-Host "FileHash for netvsc.sys : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\drivers\netvsc.sys
     }
 
     if($ReplaceVfpApi) {
@@ -331,7 +404,7 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\k\kube-proxy.exe
     }
 
-    if($ReplaceVfpExt -or $ReplaceTcpIpSys -or $ReplaceNetioSys) {
+    if($restartNode) {
         Write-Host "Restarting the node : $hpcPod initiated in 3 seconds."
         Start-Sleep -Seconds 3
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Computer -Force
@@ -345,4 +418,11 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted "Start-Job -FilePath $ScriptCmd"
         Write-Host "Running powershell script $ScriptName in : $hpcPod completed."
     }
+
+    if($CopyFile) {
+        Write-Host "Copying file $FileName in : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp .\Binaries\$FileName $FileDstPath\$FileName
+        Write-Host "Copying file $FileName in : $hpcPod completed."
+    }
+
 }
