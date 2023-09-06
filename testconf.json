@@ -1,19 +1,23 @@
 {
     "ClusterInfo" : {
-        "Name" : "pperAksIpv6",
-        "RgName" : "pperIpv6Rg",
-        "SubscriptionId" : "9bd7ff15-396a-4478-a89b-4d8ae7e302b6",
+        "Name" : "pperAksNxgen",
+        "RgName" : "pperRgNxgen",
+        "SubscriptionId" : "[Provide SubscriptionId]",
+        "ControlNodeOsSku" : "AzureLinux",
         "NodePoolName" : "npwin",
         "OsSku" : "Windows2022",
+        "NodeUsername" : "azureuser",
+        "NodePassword" : "azureuser@123456",
         "NodeCount" : 2,
-        "InstallRequired" : false,
+        "InstallRequired" : true,
         "UninstallAfterTest" : false,
         "ResetClusterCreds" : false,
         "Npm" : "",
         "Location" : "centraluseuap",
         "NwPlugin" : "azure",
-        "NwPluginMode" : "overlay",
-        "K8sVersion" : "1.26.3",
+        "NwPluginMode" : "overlay/[Empty for Singlestack]",
+        "K8sVersion" : "",
+        "EnableRdp" : true,
         "IsDualStack" : true
     },
     "AppInfo" : {
@@ -32,14 +36,14 @@
         "ETPClusterServicePortIPV6" : "4444",
         "ETPLocalServicePortIPV6" : "4444",
         "InternalPort" : "4444",
-        "InstallIPv4Required" : false,
+        "InstallIPv4Required" : true,
         "InstallIPV6Required" : true,
         "UninstallAfterTest" : false,
         "LogPath" : ".\\logs\\TestcaseResults.log"
     },
-    "SkipAllTestcases" : false,
-    "SkipIPV4": true,
-    "SkipIPV6": false,
+    "SkipAllTestcases" : true,
+    "SkipIPV4": false,
+    "SkipIPV6": true,
     "IPV4Testcases" : [
         {
             "Name" : "Basic Pod to Local Pod using Pod IP",
@@ -146,7 +150,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic External to ETPCluster Service using IngressIP",
@@ -213,13 +217,13 @@
             "Name" : "Basic Ping Test from Pod to Internet using DNS",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic Ping Test from Pod to Internet using IPV4 IP",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "204.79.197.200",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic TNC request from Pod to Internet using DNS",
@@ -231,7 +235,7 @@
             "Name" : "Basic TNC request from Pod to Internet using IPV4 IP",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "204.79.197.200",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic Ping from Local Node to Remote Node using IPV4 IP",
@@ -255,7 +259,7 @@
             "Name" : "Basic Ping Request from Node to Internet using IPV4 IP",
             "Type" : "PingNodeToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, FailProbe, PassProbe",
@@ -266,7 +270,7 @@
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 } ],
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. Failprobe, StartTcp, PassProbe",
@@ -278,7 +282,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 1 }, { "StartTcpClient" : true, "Sleep" : 30, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, Deletepod, Connection should Pass",
@@ -290,7 +294,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 2 } , { "ScaleTo" : 1, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][19]. StartTcp, FailReadiness, DeletePod, Connection should Pass",
@@ -301,7 +305,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 2 }, { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 3 } , { "ScaleTo" : 1, "Seq" : 4 }],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][20]. StartTcp,ScaleFrom2To20, Connection should Pass",
@@ -313,7 +317,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 20, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][21]. StartTcp,ScaleFrom20To2, Connection should Pass",
@@ -325,7 +329,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 2, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.1]. StartTcp,ScaleFrom10To0, Connection should Pass",
@@ -337,7 +341,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 15, "Seq" : 1 } , { "ScaleTo" : 0, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:20, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.2]. No pods, Connection should fail",
@@ -349,7 +353,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "ScaleTo" : 0, "Seq" : 1, "Sleep" : 15 }, { "StartTcpClient" : true, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.1]. FailReadinessProbe, StartTcpClient, PassReadinessProbe, Connections should fail",
@@ -361,7 +365,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2, "Sleep" : 20 }, { "PassReadinessProbe" : true, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.2]. PassReadinessProbe, StartTcpClient, Connections should pass",
@@ -373,7 +377,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "PassReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         }
     ],
     "IPV6Testcases" : [
@@ -482,7 +486,7 @@
             "ConnectionCount" : 4,
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 100,
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic External to ETPCluster Service using IngressIP",
@@ -549,13 +553,13 @@
             "Name" : "Basic Ping Test from Pod to Internet using DNS",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic Ping Test from Pod to Internet using IPV6 IP",
             "Type" : "PingPodToInternet",
             "RemoteAddress" : "2620:1ec:c11::200",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Basic TNC request from Pod to Internet using DNS",
@@ -591,7 +595,7 @@
             "Name" : "Basic Ping Request from Node to Internet using IPV6 IP",
             "Type" : "PingNodeToInternet",
             "RemoteAddress" : "bing.com",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, FailProbe, PassProbe",
@@ -602,7 +606,7 @@
             "RequestsPerConnection" : 10,
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 2, "Seq" : 1 }, { "FailReadinessProbe" : true, "Sleep" : 2, "Seq" : 2 }, { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 } ],
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. Failprobe, StartTcp, PassProbe",
@@ -614,7 +618,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 1 }, { "StartTcpClient" : true, "Sleep" : 30, "Seq" : 2 } , { "PassReadinessProbe" : true, "Sleep" : 2, "Seq" : 3 }  ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:4",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, Deletepod, Connection should Pass",
@@ -626,7 +630,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 2 } , { "ScaleTo" : 1, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][19]. StartTcp, FailReadiness, DeletePod, Connection should Pass",
@@ -637,7 +641,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "FailReadinessProbe" : true, "Sleep" : 5, "Seq" : 2 }, { "ScaleTo" : 0, "Sleep" : 4, "Seq" : 3 } , { "ScaleTo" : 1, "Seq" : 4 }],
             "ExpectedResult" : "ConnectionsSucceded:4, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][20]. StartTcp,ScaleFrom2To20, Connection should Pass",
@@ -649,7 +653,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 20, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][21]. StartTcp,ScaleFrom20To2, Connection should Pass",
@@ -661,7 +665,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 5, "Seq" : 1 } , { "ScaleTo" : 2, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.1]. StartTcp,ScaleFrom10To0, Connection should Pass",
@@ -673,7 +677,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "StartTcpClient" : true, "Sleep" : 15, "Seq" : 1 } , { "ScaleTo" : 0, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:20, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][22.2]. No pods, Connection should fail",
@@ -685,7 +689,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "ScaleTo" : 0, "Seq" : 1, "Sleep" : 15 }, { "StartTcpClient" : true, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.1]. FailReadinessProbe, StartTcpClient, PassReadinessProbe, Connections should fail",
@@ -697,7 +701,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "FailReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2, "Sleep" : 20 }, { "PassReadinessProbe" : true, "Seq" : 3 } ],
             "ExpectedResult" : "ConnectionsSucceded:0, ConnectionsFailed:2",
-            "Skip" : false
+            "Skip" : true
         },
         {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster][23.2]. PassReadinessProbe, StartTcpClient, Connections should pass",
@@ -709,7 +713,7 @@
             "TimeBtwEachRequestInMs" : 1000,
             "Actions" : [ { "PassReadinessProbe" : true, "Sleep" : 10, "Seq" : 1 } , { "StartTcpClient" : true, "Seq" : 2 } ],
             "ExpectedResult" : "ConnectionsSucceded:2, ConnectionsFailed:0",
-            "Skip" : false
+            "Skip" : true
         }
     ]
 }

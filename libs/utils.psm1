@@ -326,12 +326,18 @@ function GetClusterIP {
 function GetNodePort {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
-        [Parameter (Mandatory = $true)] [String]$serviceName
+        [Parameter (Mandatory = $true)] [String]$serviceName,
+        [Parameter (Mandatory = $false)] [String]$protocolName = "tcp"
     )
     $items = (kubectl get services -n $namespace -o json | ConvertFrom-Json).Items
     foreach($item in $items) { 
-        if(($item.metadata).name -eq $serviceName) { 
-            return ($item.spec).ports.nodePort
+        if(($item.metadata).name -eq $serviceName) {
+            $ports = ($item.spec).ports
+            foreach($port in $ports) {
+                if($port.name -eq $protocolName) {
+                    return $port.nodePort
+                }
+            }
         } 
     }
     return ""

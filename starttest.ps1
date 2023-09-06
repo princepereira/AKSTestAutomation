@@ -83,7 +83,10 @@ $Global:nodePoolName = $clusterInfo.NodePoolName
 
 # Setup Cluster
 if($clusterInfo.InstallRequired) {
-    InstallCluster -clusterInfo $clusterInfo
+    $status = InstallCluster -clusterInfo $clusterInfo
+    if($status -eq "FAILED") {
+        return
+    }
 } else {
     Log "Skipping AKS Cluster Deployment."
 }
