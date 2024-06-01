@@ -145,6 +145,20 @@ function GetPodName {
     return ""
 }
 
+function GetPodNameFromIP {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$podIP
+    )
+    $items = ((kubectl get pods -n $namespace -o json | ConvertFrom-Json).Items)
+    foreach($item in $items) {
+        if ($item.status.podIP -eq $podIP) {
+            return $item.metadata.name
+        }
+    }
+    return ""
+}
+
 function GetClientName {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
@@ -224,6 +238,36 @@ function GetNodeIPs {
         }
 
         if($rightHost) {
+            foreach($address in $status.addresses) {
+                if($useIPV6) {
+                    if($address.address.Contains(":")) {
+                        $nodeIPs += $address.address
+                    }
+                } elseif ($address.address.Split(".").Count -eq 4) {
+                    $nodeIPs += $address.address
+                }
+            }
+        }
+
+    }
+    return $nodeIPs
+}
+
+function GetLinuxNodeIPs {
+    param (
+        [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
+    )
+    $nodeIPs = @()
+    $statuses = ((kubectl get nodes -o json | ConvertFrom-Json).items).status
+    foreach($status in $statuses) {
+        $windowsHost = $false
+        foreach($address in $status.addresses) {
+            if($address.address.Contains($nodePoolName)) {
+                $windowsHost = $true
+            }
+        }
+
+        if(!$windowsHost) {
             foreach($address in $status.addresses) {
                 if($useIPV6) {
                     if($address.address.Contains(":")) {
@@ -495,6 +539,43 @@ function FailReadinessProbeForAllServerPods {
     WaitForPodsToBeNonReady -namespace $namespace -deployment $serverDeploymentName
 
     Log "Failing readiness probe for all server pods completed."
+}
+
+function ResetMetrics {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$clientName,
+        [Parameter (Mandatory = $true)] [String[]]$serverPodIPs
+    )
+    foreach($podIP in $serverPodIPs) {
+        $resetMetricsApiReq = "curl $podIP:8090/resetmetrics -UseBasicParsing"
+        if($useIPV6) {
+            $resetMetricsApiReq = "curl [$podIP]:8090/resetmetrics -UseBasicParsing"
+        }
+        $result = kubectl exec $clientName -n $namespace -- powershell -command $resetMetricsApiReq
+        Log "Resetting metrics for $podIP status : $result"
+    }
+}
+
+function GetTcpConnectedIPs {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$clientName,
+        [Parameter (Mandatory = $true)] [String[]]$serverPodIPs
+    )
+    $ipAddressList = @()
+    foreach($podIP in $serverPodIPs) {
+        $readMetricsApiReq = "((curl http://$podIP:8090/metrics -UseBasicParsing | select Content).Content | ConvertFrom-Json).tcp.ip_addresses"
+        if($useIPV6) {
+            $readMetricsApiReq = "((curl http://[$podIP]:8090/metrics -UseBasicParsing | select Content).Content | ConvertFrom-Json).tcp.ip_addresses"
+        }
+        $result = (kubectl exec $clientName -n $namespace -- powershell -command $readMetricsApiReq)
+        Log "Reading metrics for $podIP status : $result"
+        if (($null -ne $result) -and ($result.Count -gt 0)) {
+            return $result, $podIP
+        }
+    }
+    return $ipAddressList, ""
 }
 
 function PassReadinessProbeForAllServerPods {

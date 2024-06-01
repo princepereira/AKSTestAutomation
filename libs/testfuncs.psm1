@@ -202,6 +202,83 @@ function TestExternalToIngressIP {
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
+function TestProxyTerminating_PktFromLinuxNodeToWinPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    
+    if(!(ScalePods -testcase $testcase -appInfo $appInfo -index $index)) {
+        return $false
+    }
+
+    Log "Pods"
+    kubectl get pods -o wide -n $appInfo.Namespace
+
+    $serviceName = $appInfo.ETPClusterServiceName
+    $servicePort = $appInfo.ETPClusterServicePort
+    if($testcase.ServiceType -eq "ETPLocal") {
+        $serviceName = $appInfo.ETPLocalServiceName
+        $servicePort = $appInfo.ETPLocalServicePort
+    }
+
+    if($useIPV6) {
+        $serviceName = $appInfo.ETPClusterServiceNameIPV6
+        $servicePort = $appInfo.ETPClusterServicePortIPV6
+        if($testcase.ServiceType -eq "ETPLocal") {
+            $serviceName = $appInfo.ETPLocalServiceNameIPV6
+            $servicePort = $appInfo.ETPLocalServicePortIPV6
+        }
+    }
+
+    $attempts = 10
+    $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $linuxNodeIPs = GetLinuxNodeIPs -useIPV6 $useIPV6
+    $serverPodIPs = GetAllServerPodIPs -namespace $appInfo.Namespace -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+
+    for($i = 1; $i -le $attempts; $i++) {
+        
+        # resetting metrics
+        ResetMetrics -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+        $Job = Start-Job -ScriptBlock { bin\client.exe -i $args[0] -p $args[1] -c 1 -r 5 -d 1000 } -ArgumentList $ingressIP, $servicePort
+        Start-Sleep -Seconds 3
+        $connectedIPs, $connectedPodIP = GetTcpConnectedIPs -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+        $connectedIP = $connectedIPs[0]
+        $connectedToLinuxeNode = $false
+        foreach($nodeIP in $linuxNodeIPs) {
+            if ($connectedIP -eq $nodeIP) {
+                $connectedToLinuxeNode = $true
+                break
+            }
+        }
+
+        if ($connectedToLinuxeNode -eq $false) {
+            Receive-Job $Job
+            Remove-Job $job
+            continue
+        }
+
+        $connectedPod = GetPodNameFromIP -namespace demo -podIP $connectedIP
+        # Deleting connected Pod
+        kubectl delete pod $connectedPod -n $appInfo.Namespace --grace-period=0 --force
+
+        Wait-Job $Job
+        $result = Receive-Job $Job
+        Remove-Job $job
+        break
+    }
+
+    $expectedResult = "ConnectionsSucceded:1, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
 function TestPodToLocalPod {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
