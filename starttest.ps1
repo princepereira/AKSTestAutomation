@@ -25,6 +25,9 @@ $TypeNodeToLocalPod = "NodeToLocalPod"
 $TypeNodeToRemotePod = "NodeToRemotePod"
 $TypeNodeToClusterIP = "NodeToClusterIP"
 $TypeNodeToHostPort = "NodeToHostPort"
+$TypeProxyTerminatingLinuxNodeToPod = "ProxyTerminatingLinuxNodeToPod"
+$TypeProxyTerminatingWinNodeToLocalPod= "ProxyTerminatingWinNodeToLocalPod"
+$TypeProxyTerminatingWinNodeToRemotePod= "ProxyTerminatingWinNodeToRemotePod"
 
 
 $testConf = Get-Content .\testconf.json | ConvertFrom-Json
@@ -58,6 +61,9 @@ function RunTestcase {
         $TypePodToNodePort { TestPodToNodePort -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePodToIngressIP { TestPodToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypeExternalToIngressIP { TestExternalToIngressIP -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeProxyTerminatingLinuxNodeToPod { TestProxyTerminating_PktFromLinuxNodeToWinPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeProxyTerminatingWinNodeToLocalPod{ TestProxyTerminating_PktFromWinNodeToLocalPod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
+        $TypeProxyTerminatingWinNodeToRemotePod{ TestProxyTerminating_PktFromWinNodeToRemotePod -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePodToLocalNode { TestPodToLocalNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePodToRemoteNode { TestPodToRemoteNode -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }
         $TypePodToInternet { TestPodToInternet -testcase $testcase -appInfo $appInfo -index $index -useIPV6 $useIPV6 }

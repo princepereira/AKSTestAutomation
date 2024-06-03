@@ -202,6 +202,360 @@ function TestExternalToIngressIP {
     LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
 }
 
+function TestProxyTerminating_PktFromLinuxNodeToWinPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+
+    if(!(EnsurePodsAreDistributed -namespace $appInfo.Namespace -tcaseName $testcase.Name -index $index -serverDeploymentName $appInfo.ServerDeploymentName -serverPodCount $testcase.ServerPodCount -useIPV6 $useIPV6)) {
+        return $false
+    }
+
+    Log "Pods"
+    kubectl get pods -o wide -n $appInfo.Namespace
+
+    $serviceName = $appInfo.ETPClusterServiceName
+    $servicePort = $appInfo.ETPClusterServicePort
+    if($testcase.ServiceType -eq "ETPLocal") {
+        $serviceName = $appInfo.ETPLocalServiceName
+        $servicePort = $appInfo.ETPLocalServicePort
+    }
+
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+        $serviceName = $appInfo.ETPClusterServiceNameIPV6
+        $servicePort = $appInfo.ETPClusterServicePortIPV6
+        if($testcase.ServiceType -eq "ETPLocal") {
+            $serviceName = $appInfo.ETPLocalServiceNameIPV6
+            $servicePort = $appInfo.ETPLocalServicePortIPV6
+        }
+    }
+
+    $attempts = 10
+    $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $linuxNodeIPs = GetLinuxNodeIPs -useIPV6 $useIPV6
+    $serverPodIPs = GetAllServerPodIPs -namespace $appInfo.Namespace -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+
+    $clientBinaryPath = (Get-Location).Path + "\bin\"
+    $PathVariable = $env:PATH
+    if($PathVariable -notlike "*$clientBinaryPath*") {
+        $env:PATH = $PathVariable + ";" + $clientBinaryPath
+    }
+
+    for($i = 1; $i -le $attempts; $i++) {
+        # resetting metrics
+        ResetMetrics -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+        Log "[ProxyTerminating_PktFromLinuxNodeToWinPod] Started connection in background. Attempt : $i/$attempts , client.exe -i $ingressIP -p $servicePort -c 1 -r 30 -d 1000 "
+        $Job = Start-Job -ScriptBlock { 
+            client.exe -i $args[0] -p $args[1] -c 1 -r 30 -d 1000
+        } -ArgumentList $ingressIP, $servicePort
+
+        Start-Sleep -Seconds 2
+        # Ensuring the connection is established
+        for ($j = 1; $j -le $attempts; $j++) {
+            $connectedIP, $connectedPodIP = GetTcpConnectedIPs -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+            if ($connectedPodIP -ne "") {
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+        
+        if ($connectedPodIP -eq "") {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+
+        Log "Connection Remote Address : $connectedIP , Server Pod to which connection is established : $connectedPodIP"
+
+        $connectedToLinuxeNode = $false
+        foreach($nodeIP in $linuxNodeIPs) {
+            if ($connectedIP -eq $nodeIP) {
+                $connectedToLinuxeNode = $true
+                break
+            }
+        }
+
+        if ($connectedToLinuxeNode -eq $false) {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+
+        $connectedPod = GetPodNameFromIP -namespace $appInfo.Namespace -podIP $connectedPodIP
+        # Deleting connected Pod
+        kubectl delete pod $connectedPod -n $appInfo.Namespace
+
+        Wait-Job $Job
+        $result = Receive-Job $Job
+        Remove-Job $job
+        break
+    }
+
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    if (($i -gt $attempts) -or ($null -eq $result) -or ($empty -eq $result)) {
+        $result = "[SKIPPED] Testcase $index : [$ipVersion][$tcaseName]. Ran out of $attempts attempts. Couldn't repro connection through Linux Node to Windows Pod."
+        Log $result
+        Add-content $appInfo.LogPath -value $result
+        return
+    }
+
+    $expectedResult = "ConnectionsSucceded:1, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
+function TestProxyTerminating_PktFromWinNodeToLocalPod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    
+    if(!(EnsurePodsAreDistributed -namespace $appInfo.Namespace -tcaseName $testcase.Name -index $index -serverDeploymentName $appInfo.ServerDeploymentName -serverPodCount $testcase.ServerPodCount -useIPV6 $useIPV6)) {
+        return $false
+    }
+
+    Log "Pods"
+    kubectl get pods -o wide -n $appInfo.Namespace
+
+    $serviceName = $appInfo.ETPClusterServiceName
+    $servicePort = $appInfo.ETPClusterServicePort
+    if($testcase.ServiceType -eq "ETPLocal") {
+        $serviceName = $appInfo.ETPLocalServiceName
+        $servicePort = $appInfo.ETPLocalServicePort
+    }
+
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+        $serviceName = $appInfo.ETPClusterServiceNameIPV6
+        $servicePort = $appInfo.ETPClusterServicePortIPV6
+        if($testcase.ServiceType -eq "ETPLocal") {
+            $serviceName = $appInfo.ETPLocalServiceNameIPV6
+            $servicePort = $appInfo.ETPLocalServicePortIPV6
+        }
+    }
+
+    $attempts = 10
+    $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $serverPodIPs = GetAllServerPodIPs -namespace $appInfo.Namespace -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $linuxNodeIPs = GetLinuxNodeIPs -useIPV6 $useIPV6
+    $winNodeIPs = GetNodeIPs -useIPV6 $useIPV6
+
+    $clientBinaryPath = (Get-Location).Path + "\bin\"
+    $PathVariable = $env:PATH
+    if($PathVariable -notlike "*$clientBinaryPath*") {
+        $env:PATH = $PathVariable + ";" + $clientBinaryPath
+    }
+
+    for($i = 1; $i -le $attempts; $i++) {
+        # resetting metrics
+        ResetMetrics -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+        Log "[ProxyTerminating_PktFromWinNodeToLocalPod] Started connection in background. Attempt : $i/$attempts , client.exe -i $ingressIP -p $servicePort -c 1 -r 30 -d 1000 "
+
+        $Job = Start-Job -ScriptBlock {
+            client.exe -i $args[0] -p $args[1] -c 1 -r 30 -d 1000
+        } -ArgumentList $ingressIP, $servicePort
+
+        Start-Sleep -Seconds 2
+        # Ensuring the connection is established
+        for ($j = 1; $j -le $attempts; $j++) {
+            $connectedIP, $connectedPodIP = GetTcpConnectedIPs -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+            if ($connectedPodIP -ne "") {
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+        
+        if ($connectedPodIP -eq "") {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+        
+        $connectedPod = GetPodNameFromIP -namespace $appInfo.Namespace -podIP $connectedPodIP
+        if ($connectedPod -eq "") {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+        $connectedPodHostIP = GetNodeIPFromPodName -namespace $appInfo.Namespace -podName $connectedPod
+
+        Log "Connection Remote Address : $connectedIP , Server Pod to which connection is established : $connectedPodIP , Host IP Address of the connected Pod : $connectedPodHostIP"
+
+        $skipIteration = $false
+        if ($empty -eq $connectedPodIP) {
+            $skipIteration = $true
+        } elseif ($connectedIP -eq $connectedPodHostIP) {
+            $skipIteration = $false
+        } elseif (IpInNodeIPList -ip $connectedIP -linuxNodeIPs $linuxNodeIPs -winNodeIPs $winNodeIPs) {
+            $skipIteration = $true
+        }
+
+        if ($skipIteration -eq $true) {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+
+        # Deleting connected Pod
+        kubectl delete pod $connectedPod -n $appInfo.Namespace
+
+        Wait-Job $Job
+        $result = Receive-Job $Job
+        Remove-Job $job
+        break
+    }
+
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    if (($i -gt $attempts) -or ($null -eq $result) -or ($empty -eq $result)) {
+        $result = "[SKIPPED] Testcase $index : [$ipVersion][$tcaseName]. Ran out of $attempts attempts. Couldn't repro connection through Windows Node to Local Pod."
+        Log $result
+        Add-content $appInfo.LogPath -value $result
+        return
+    }
+
+    $expectedResult = "ConnectionsSucceded:1, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
+function TestProxyTerminating_PktFromWinNodeToRemotePod {
+    param (
+        [Parameter (Mandatory = $true)] [System.Object]$testcase,
+        [Parameter (Mandatory = $true)] [System.Object]$appInfo,
+        [Parameter (Mandatory = $true)] [bool]$useIPV6,
+        [Parameter (Mandatory = $true)] [Int32]$index
+    )
+    
+    if(!(EnsurePodsAreDistributed -namespace $appInfo.Namespace -tcaseName $testcase.Name -index $index -serverDeploymentName $appInfo.ServerDeploymentName -serverPodCount $testcase.ServerPodCount -useIPV6 $useIPV6)) {
+        return $false
+    }
+
+    Log "Pods"
+    kubectl get pods -o wide -n $appInfo.Namespace
+
+    $serviceName = $appInfo.ETPClusterServiceName
+    $servicePort = $appInfo.ETPClusterServicePort
+    if($testcase.ServiceType -eq "ETPLocal") {
+        $serviceName = $appInfo.ETPLocalServiceName
+        $servicePort = $appInfo.ETPLocalServicePort
+    }
+
+    $ipVersion = "IPV4"
+    if($useIPV6) {
+        $ipVersion = "IPV6"
+        $serviceName = $appInfo.ETPClusterServiceNameIPV6
+        $servicePort = $appInfo.ETPClusterServicePortIPV6
+        if($testcase.ServiceType -eq "ETPLocal") {
+            $serviceName = $appInfo.ETPLocalServiceNameIPV6
+            $servicePort = $appInfo.ETPLocalServicePortIPV6
+        }
+    }
+
+    $attempts = 10
+    $ingressIP = GetIngressIP -namespace $appInfo.Namespace -serviceName $serviceName
+    $clientName = GetClientName -namespace $appInfo.Namespace -deploymentName $appInfo.ClientDeploymentName
+    $serverPodIPs = GetAllServerPodIPs -namespace $appInfo.Namespace -serverDeploymentName $appInfo.ServerDeploymentName -useIPV6 $useIPV6
+    $winNodeIPs = GetNodeIPs -useIPV6 $useIPV6
+
+    $clientBinaryPath = (Get-Location).Path + "\bin\"
+    $PathVariable = $env:PATH
+    if($PathVariable -notlike "*$clientBinaryPath*") {
+        $env:PATH = $PathVariable + ";" + $clientBinaryPath
+    }
+
+    for($i = 1; $i -le $attempts; $i++) {
+        # resetting metrics
+        ResetMetrics -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+        Log "[ProxyTerminating_PktFromWinNodeToRemotePod] Started connection in background. Attempt : $i/$attempts , client.exe -i $ingressIP -p $servicePort -c 1 -r 30 -d 1000 "
+
+        $Job = Start-Job -ScriptBlock {
+            client.exe -i $args[0] -p $args[1] -c 1 -r 30 -d 1000
+        } -ArgumentList $ingressIP, $servicePort
+
+        Start-Sleep -Seconds 2
+        
+        # Ensuring the connection is established
+        for ($j = 1; $j -le $attempts; $j++) {
+            $connectedIP, $connectedPodIP = GetTcpConnectedIPs -namespace $appInfo.Namespace -clientName $clientName -serverPodIPs $serverPodIPs
+            if ($connectedPodIP -ne "") {
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+        
+        if ($connectedPodIP -eq "") {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+
+        $connectedPod = GetPodNameFromIP -namespace $appInfo.Namespace -podIP $connectedPodIP
+        if ($connectedPod -eq "") {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+        $connectedPodHostIP = GetNodeIPFromPodName -namespace $appInfo.Namespace -podName $connectedPod
+
+        Log "Connection Remote Address : $connectedIP , Server Pod to which connection is established : $connectedPodIP , Host IP Address of the connected Pod : $connectedPodHostIP"
+
+        $connectedToRemoteWinNode = $false
+
+        if (($connectedPodIP -eq "") -or ($connectedIP -eq $connectedPodHostIP)) {
+            $connectedToRemoteWinNode = $false
+        } else {
+            foreach($nodeIP in $winNodeIPs) {
+                if ($connectedIP -eq $nodeIP) {
+                    $connectedToRemoteWinNode = $true
+                    break
+                }
+            }
+        }
+
+        if ($connectedToRemoteWinNode -eq $false) {
+            Receive-Job $Job
+            Remove-Job $job -Force
+            continue
+        }
+
+        # Deleting connected Pod
+        kubectl delete pod $connectedPod -n $appInfo.Namespace
+
+        Wait-Job $Job
+        $result = Receive-Job $Job
+        Remove-Job $job
+        break
+    }
+
+    $tcaseName = NewTestCaseName -testcaseName $testcase.Name -serviceIP $ingressIP -servicePort $servicePort
+    if (($i -gt $attempts) -or ($null -eq $result) -or ($empty -eq $result)) {
+        $result = "[SKIPPED] Testcase $index : [$ipVersion][$tcaseName]. Ran out of $attempts attempts. Couldn't repro connection through Windows Node to Remote Pod."
+        Log $result
+        Add-content $appInfo.LogPath -value $result
+        return
+    }
+
+    $expectedResult = "ConnectionsSucceded:1, ConnectionsFailed:0"
+    if($testcase.ExpectedResult -and ($testcase.ExpectedResult -ne "")) {
+        $expectedResult = $testcase.ExpectedResult
+    }
+    LogResult -logPath $appInfo.LogPath -useIPV6 $useIPV6  -testcaseName $tcaseName -index $index -expectedResult $expectedResult -actualResult $result[$result.Count-1]
+}
+
 function TestPodToLocalPod {
     param (
         [Parameter (Mandatory = $true)] [System.Object]$testcase,
