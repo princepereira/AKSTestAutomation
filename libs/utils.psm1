@@ -175,6 +175,14 @@ function GetNodeNameFromPodName {
     return (kubectl get pods $podName -n $namespace -o json | ConvertFrom-Json).spec.nodeName
 }
 
+function GetNodeIPFromPodName {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$podName
+    )
+    return (kubectl get pods $podName -n $namespace -o json | ConvertFrom-Json).status.hostIP
+}
+
 function GetLocalNodeIP {
     param (
         [Parameter (Mandatory = $true)] [String]$nodeName,
@@ -221,6 +229,60 @@ function GetRemoteNodeIP {
         }
     }
     return ""
+}
+
+function EnsurePodsAreDistributed {
+    param (
+        [Parameter (Mandatory = $true)] [String]$namespace,
+        [Parameter (Mandatory = $true)] [String]$tcaseName,
+        [Parameter (Mandatory = $true)] [Int32]$index,
+        [Parameter (Mandatory = $true)] [String]$serverDeploymentName,
+        [Parameter (Mandatory = $true)] [Int32]$serverPodCount,
+        [Parameter (Mandatory = $false)] [bool]$useIPV6 = $false
+    )
+
+    $winNodeIPs = GetNodeIPs -useIPV6 $useIPV6
+    $attempts = 10
+
+    for ($i = 1; $i -le $attempts; $i++) {
+
+        Log "Scaling the server pods to $serverPodCount"
+        kubectl scale --replicas=$serverPodCount deployment/$serverDeploymentName -n $namespace
+        
+        if(!(WaitForPodsToBeReady -namespace $namespace)) {
+            Log "Containers didn't come up."
+            $result = "Testcase $index : $tcaseName - FAILED . Remarks : Pods didn't come up."
+            Log $result
+            Add-content $logPath -value $result
+            return $false
+        }
+
+        # Storing nodeips to a hashtable for easy lookup
+        $winNodeIPsHashTable = @{ }
+        foreach($ip in $winNodeIPs) {
+            $winNodeIPsHashTable[$ip] = $true
+        }
+
+        $serverPodIPs = GetAllServerPodIPs -namespace $namespace -serverDeploymentName $serverDeploymentName -useIPV6 $useIPV6
+        # Ensuring pods are equally distributed
+        foreach($podIP in $serverPodIPs) {
+            $nodeIP = GetNodeIPFromPodName -namespace $namespace -podName (GetPodNameFromIP -namespace $namespace -podIP $podIP)
+            if($winNodeIPsHashTable[$nodeIP]) {
+                $winNodeIPsHashTable.Remove($nodeIP)
+            }
+        }
+        if($winNodeIPsHashTable.Count -eq 0) {
+            return $true
+        }
+        $nodeKeys = $winNodeIPsHashTable.Keys
+        Log "Pods are not distributed. Attempt : $i. These nodes still don't have pods. $nodeKeys"
+        Log "Scaling the pods to 0."
+        kubectl scale --replicas=0 deployment/$serverDeploymentName -n $namespace
+        Start-Sleep -Seconds 10
+    }
+    $result = "Testcase $index : $tcaseName - FAILED . Remarks : Pod distribution failed."
+    Log $result
+    Add-content $logPath -value $result
 }
 
 function GetNodeIPs {
@@ -528,7 +590,7 @@ function FailReadinessProbeForAllServerPods {
     Log "Failing readiness probe for all server pods started. PodIPs : $serverPodIPs"
 
     foreach($podIP in $serverPodIPs) {
-        $apiReq = "curl $podIP:8090/failreadinessprobe -UseBasicParsing"
+        $apiReq = "curl $podIP`:8090/failreadinessprobe -UseBasicParsing"
         if($useIPV6) {
             $apiReq = "curl [$podIP]:8090/failreadinessprobe -UseBasicParsing"
         }
@@ -541,6 +603,25 @@ function FailReadinessProbeForAllServerPods {
     Log "Failing readiness probe for all server pods completed."
 }
 
+function IpInNodeIPList {
+    param (
+        [Parameter (Mandatory = $true)] [String]$ip,
+        [Parameter (Mandatory = $true)] [String[]]$linuxNodeIPs,
+        [Parameter (Mandatory = $true)] [String[]]$winNodeIPs
+    )
+    foreach($nodeIP in $linuxNodeIPs) {
+        if($nodeIP -eq $ip) {
+            return $true
+        }
+    }
+    foreach($nodeIP in $winNodeIPs) {
+        if($nodeIP -eq $ip) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function ResetMetrics {
     param (
         [Parameter (Mandatory = $true)] [String]$namespace,
@@ -548,7 +629,8 @@ function ResetMetrics {
         [Parameter (Mandatory = $true)] [String[]]$serverPodIPs
     )
     foreach($podIP in $serverPodIPs) {
-        $resetMetricsApiReq = "curl $podIP:8090/resetmetrics -UseBasicParsing"
+        Log "Resetmetrics for pod ip : $podIP"
+        $resetMetricsApiReq = "curl $podIP`:8090/resetmetrics -UseBasicParsing"
         if($useIPV6) {
             $resetMetricsApiReq = "curl [$podIP]:8090/resetmetrics -UseBasicParsing"
         }
@@ -565,7 +647,7 @@ function GetTcpConnectedIPs {
     )
     $ipAddressList = @()
     foreach($podIP in $serverPodIPs) {
-        $readMetricsApiReq = "((curl http://$podIP:8090/metrics -UseBasicParsing | select Content).Content | ConvertFrom-Json).tcp.ip_addresses"
+        $readMetricsApiReq = "((curl http://$podIP`:8090/metrics -UseBasicParsing | select Content).Content | ConvertFrom-Json).tcp.ip_addresses"
         if($useIPV6) {
             $readMetricsApiReq = "((curl http://[$podIP]:8090/metrics -UseBasicParsing | select Content).Content | ConvertFrom-Json).tcp.ip_addresses"
         }
@@ -591,7 +673,7 @@ function PassReadinessProbeForAllServerPods {
     Log "Passing readiness probe for all server pods started. PodIPS : $serverPodIPs"
 
     foreach($podIP in $serverPodIPs) {
-        $apiReq = "curl $podIP:8090/passreadinessprobe -UseBasicParsing"
+        $apiReq = "curl $podIP`:8090/passreadinessprobe -UseBasicParsing"
         if($useIPV6) {
             $apiReq = "curl [$podIP]:8090/passreadinessprobe -UseBasicParsing"
         }

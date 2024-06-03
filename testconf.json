@@ -262,6 +262,27 @@
             "Skip" : true
         },
         {
+            "Name" : "ProxyTerminatingEndpoint from Linux Node to Pod",
+            "Type" : "ProxyTerminatingLinuxNodeToPod",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 2,
+            "Skip" : true
+        },
+        {
+            "Name" : "ProxyTerminatingEndpoint from Windows Node to Local Pod",
+            "Type" : "ProxyTerminatingWinNodeToLocalPod",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 2,
+            "Skip" : true
+        },
+        {
+            "Name" : "ProxyTerminatingEndpoint from Windows Node to Remote Pod",
+            "Type" : "ProxyTerminatingWinNodeToRemotePod",
+            "ServiceType" : "ETPCluster",
+            "ServerPodCount" : 2,
+            "Skip" : false
+        },
+        {
             "Name" : "Pod to Service using Cluster IP [ETP:Cluster]. StartTcp, FailProbe, PassProbe",
             "Type" : "PodToClusterIP",
             "ServiceType" : "ETPCluster",
