@@ -6,6 +6,7 @@ $CopyBinaries = $true
 $KeepOriginal = $false # This will replace the selected binaries with original binaries
 $EnableTestSigning = $true
 $ReplaceHns = $true
+$ReplaceWcnAgent = $true
 $ReplaceVfpCtrl = $false
 $ReplaceVfpExt = $false
 $ReplaceVfpApi = $false
@@ -106,6 +107,10 @@ function ValidateBinariesDir {
         $missingBins += "hostnetsvc.dll"
     }
 
+    if($ReplaceWcnAgent -and ((Test-Path $DirPath\wcnagent.dll) -eq $false)) {
+        $missingBins += "wcnagent.dll"
+    }
+
     if($ReplaceVfpCtrl -and ((Test-Path $DirPath\vfpctrl.exe) -eq $false)){
         $missingBins += "vfpctrl.exe"
     }
@@ -146,7 +151,7 @@ function ValidateBinariesDir {
         $missingBins += "azure-vnet.exe"
     }
 
-    if($ReplaceHns -or $ReplaceVfpCtrl -or $ReplaceVfpExt -or $ReplaceVfpApi -or $ReplaceKubeProxy -or $ReplaceTcpIpSys -or $ReplaceNetioSys -or $ReplaceNetVscSys) {
+    if($ReplaceHns -or $ReplaceWcnAgent -or $ReplaceVfpCtrl -or $ReplaceVfpExt -or $ReplaceVfpApi -or $ReplaceKubeProxy -or $ReplaceTcpIpSys -or $ReplaceNetioSys -or $ReplaceNetVscSys) {
         $sfpcopyNeeded = $true
     }
 
@@ -227,6 +232,7 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\netconf\10-azure.conflist C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpctrl.exe C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\hostnetsvc.dll C:\k\orig\
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\wcnagent.dll C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\bin\azure-vnet.exe C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\vfpext.sys C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\tcpip.sys C:\k\orig\
@@ -275,6 +281,22 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-Service hns
         Write-Host "FileHash for hns : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\hostnetsvc.dll
+    }
+
+    if($ReplaceWcnAgent) {
+        if($KeepOriginal) {
+            Write-Host "Replacing with original wcnagent in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command C:\k\orig\sfpcopy.exe C:\k\orig\wcnagent.dll C:\Windows\system32\wcnagent.dll
+        } else {
+            Write-Host "Replacing with custom wcnagent in : $hpcPod"
+            kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\wcnagent.dll C:\Windows\system32\wcnagent.dll
+        }
+        Start-Sleep -Seconds 3
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Service -f hns
+        Start-Sleep -Seconds 2
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-Service hns
+        Write-Host "FileHash for wcnagent : $hpcPod"
+        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-FileHash C:\Windows\system32\wcnagent.dll
     }
     
     if($ReplaceIpHelperApiDll) {
