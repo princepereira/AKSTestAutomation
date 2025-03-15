@@ -6,12 +6,15 @@ metadata:
 spec:
   containers:
     - name: tcpserver-hostport
-      image: princepereira/tcp-client-server:WS2022
+      image: princepereira/tcp-client-server:NC2022
       command: ["server.exe", "-p", "4444", "-pr", "All", "-swt", "5", "-awt", "5"]
       imagePullPolicy: Always
       ports:
         - containerPort: 4444
-          hostPort: 4488
+          hostPort: 54000
+        - containerPort: 4445
+          hostPort: 55000
+          protocol: UDP
   terminationGracePeriodSeconds: 1000
   nodeSelector:
     kubernetes.azure.com/os-sku: Windows2022

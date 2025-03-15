@@ -21,9 +21,8 @@ spec:
       hostNetwork: true
       containers:
       - name: hpc-ds-win
-        image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
-        command: ["powershell"]
-        args: ["while($true)", "{ Sleep 5000 }"]
+        image: princepereira/tcp-client-server:NC2022
+        command: ["server.exe", "-p", "6666", "-pr", "All", "-swt", "5", "-awt", "5"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - name: kube-path

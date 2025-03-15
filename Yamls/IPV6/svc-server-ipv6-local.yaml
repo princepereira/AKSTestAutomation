@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     app: tcp-server
-  name: tcp-server-ipv6-local
+  name: tcp-server-ipv6-local-0
   namespace: demo
 spec:
   externalTrafficPolicy: Local

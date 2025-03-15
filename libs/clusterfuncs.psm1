@@ -7,8 +7,12 @@ function InstallCluster {
     az login
     Log "AKS Cluster Deployment Started."
     Log "Info : $clusterInfo"
+
+    #==================== SETTING SUBSCRIPTION ====================#
     Log "Setting Subscription."
     az account set --subscription $clusterInfo.SubscriptionId
+
+    #==================== CREATING RG ====================#
     Log "Creating Resource Group."
     $status = az group create --name $clusterInfo.RgName --location $clusterInfo.Location
     if($null -eq $status) {
@@ -16,6 +20,7 @@ function InstallCluster {
         return "FAILED"
     }
 
+    #==================== CREATING AKS CLUSTER ====================#
     Log "Creating Aks Cluster."
     $rgName = $clusterInfo.RgName
     $clusterName = $clusterInfo.Name
@@ -27,7 +32,7 @@ function InstallCluster {
     $NodePassword = $clusterInfo.NodePassword
     $ControlNodeOsSku = $clusterInfo.ControlNodeOsSku
 
-    $aksCreateCmd = "az aks create --resource-group $rgName --name $clusterName --node-count 1"
+    $aksCreateCmd = "az aks create --resource-group $rgName --name $clusterName --node-count 2 --generate-ssh-keys"
     if(($null -ne $nodeUserName) -and ($null -ne $NodePassword) -and ($nodeUserName -ne "") -and ($NodePassword -ne "")) {
         $aksCreateCmd = $aksCreateCmd + " --windows-admin-username $nodeUserName --windows-admin-password $NodePassword"
     }
@@ -58,6 +63,10 @@ function InstallCluster {
     if($null -ne $npmName -and $npmName -ne "") {
         $aksCreateCmd = $aksCreateCmd + " --network-policy $npmName"
     }
+
+    if($null -ne $clusterInfo.EnableMonitoring -and $clusterInfo.EnableMonitoring -eq $true) {
+        $aksCreateCmd = $aksCreateCmd + " --enable-addons monitoring"
+    }
     
     Write-Host "AKS Cluster Create Command Executed : $aksCreateCmd"
 
@@ -67,13 +76,20 @@ function InstallCluster {
         return "FAILED"
     }
 
+    #==================== CREATING NODE POOL ====================#
     Log "Creating Node Pool."
-    $status = az aks nodepool add --resource-group $clusterInfo.RgName --cluster-name $clusterInfo.Name --os-type Windows --os-sku $clusterInfo.OsSku --name $clusterInfo.NodePoolName --node-count $clusterInfo.NodeCount
+    if(($clusterInfo.NodeVmSize -ne $null) -and ($clusterInfo.NodeVmSize -ne "")) {
+        $status = az aks nodepool add --resource-group $clusterInfo.RgName --cluster-name $clusterInfo.Name --os-type Windows --node-vm-size $clusterInfo.NodeVmSize --os-sku $clusterInfo.OsSku --name $clusterInfo.NodePoolName --node-count $clusterInfo.NodeCount
+    } else {
+        $status = az aks nodepool add --resource-group $clusterInfo.RgName --cluster-name $clusterInfo.Name --os-type Windows --os-sku $clusterInfo.OsSku --name $clusterInfo.NodePoolName --node-count $clusterInfo.NodeCount
+    }
+    
     if($null -eq $status) {
         Write-Host "Node Pool creation failed" -ForegroundColor Red
         return "FAILED"
     }
 
+    #==================== RETRIEVING CREDENTIALS ====================#
     Log "Retrieving Credentials"
     az aks get-credentials --resource-group $clusterInfo.RgName --name $clusterInfo.Name --overwrite-existing
     Log "Nodes"

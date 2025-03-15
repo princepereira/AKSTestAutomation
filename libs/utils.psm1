@@ -736,6 +736,7 @@ function CopyTcpClientToNodes {
         kubectl exec $podName -n $namespace -- powershell -command Expand-Archive -Path bin.zip -DestinationPath .
         Log "Copying client.exe to C:\k path in : $podName"
         kubectl exec $podName -n $namespace -- powershell -command cp .\bin\client.exe C:\k\.
+        kubectl exec $podName -n $namespace -- powershell -command cp .\bin\* C:\hpc\.
     }
 }
 

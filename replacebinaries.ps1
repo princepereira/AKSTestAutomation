@@ -4,20 +4,20 @@ $DirPath = "Binaries"
 $CreateZip = $true
 $CopyBinaries = $true
 $KeepOriginal = $false # This will replace the selected binaries with original binaries
-$EnableTestSigning = $true
+$EnableTestSigning = $false
 $ReplaceHns = $true
-$ReplaceWcnAgent = $true
+$ReplaceWcnAgent = $false
 $ReplaceVfpCtrl = $false
 $ReplaceVfpExt = $false
 $ReplaceVfpApi = $false
 $ReplaceKubeProxy = $false
 $ReplaceAzureVnet = $false
-$ReplaceIpHelperApiDll = $true
-$ReplaceMpsSvcDll = $true
-$ReplaceNetVscSys = $true
-$ReplaceTcpIpSys = $true
-$ReplaceNetioSys = $true
-$SetRegKeys = $false
+$ReplaceIpHelperApiDll = $false
+$ReplaceMpsSvcDll = $false
+$ReplaceNetVscSys = $false
+$ReplaceTcpIpSys = $false
+$ReplaceNetioSys = $false
+$SetRegKeys = $true
 $RunPSScript = $false
 $CopyFile = $false
 
@@ -28,7 +28,13 @@ $Namespace = "demo"
 
 $RegKeys = @(
     # "Set-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SDNIpv6DefaultGw -Value 'fe80::1234:5678:9abc'"
-    "Set-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SdnGatewayArpMac -Value '12-34-56-78-9a-bc'"
+    # "Set-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SdnGatewayArpMac -Value '12-34-56-78-9a-bc'"
+    "rm -r -Force C:\LocalDumps",
+    "mkdir -p C:\LocalDumps",
+    "Reg add 'HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps' /V DumpCount /t REG_DWORD /d 50 /f",
+    "Reg add 'HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps' /V DumpType /t REG_DWORD /d 2 /f",
+    "Reg add 'HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps' /V DumpFolder /t REG_EXPAND_SZ /d C:\LocalDumps /f",
+    "Restart-Service -f hns"
 )
 
 $ScriptName = "removeArp.ps1"
@@ -228,16 +234,16 @@ foreach($hpcPod in $allHpcPods) {
         Write-Host "Taking backup of original binaries : $hpcPod"
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command mkdir C:\k\orig
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp Binaries\sfpcopy.exe C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azure-vnet.json C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\netconf\10-azure.conflist C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpctrl.exe C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azure-vnet.json C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\netconf\10-azure.conflist C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpctrl.exe C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\hostnetsvc.dll C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\wcnagent.dll C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\bin\azure-vnet.exe C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\vfpext.sys C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\tcpip.sys C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\netio.sys C:\k\orig\
-        kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpapi.dll C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\wcnagent.dll C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\azurecni\bin\azure-vnet.exe C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\vfpext.sys C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\tcpip.sys C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\drivers\netio.sys C:\k\orig\
+        # kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\Windows\system32\vfpapi.dll C:\k\orig\
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command cp C:\k\kube-proxy.exe C:\k\orig\
     }
 
@@ -251,7 +257,7 @@ foreach($hpcPod in $allHpcPods) {
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\VfpExt\Parameters
     }
 
-    $restartNode = $false
+    $restartNode = $true
 
     if($ReplaceAzureVnet) {
         if($KeepOriginal) {
@@ -275,7 +281,7 @@ foreach($hpcPod in $allHpcPods) {
             Write-Host "Replacing with custom hns in : $hpcPod"
             kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command .\Binaries\sfpcopy.exe .\Binaries\HostNetSvc.dll C:\Windows\system32\hostnetsvc.dll
         }
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Restart-Service -f hns
         Start-Sleep -Seconds 2
         kubectl exec $hpcPod -n $Namespace -- powershell -ExecutionPolicy Unrestricted -command Get-Service hns
