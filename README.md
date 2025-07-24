@@ -126,6 +126,7 @@ For advanced test scenarios:
 - `NodeToLocalPod` - Node to pod on same node
 - `NodeToRemotePod` - Node to pod on different node
 - `NodeToClusterIP` - Node to service using cluster IP
+- `NodeToHostPort` - Node to service using host port
 
 **External Communication:**
 - `ExternalToIngressIP` - External client to service
