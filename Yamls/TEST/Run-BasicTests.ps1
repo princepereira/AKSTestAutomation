@@ -148,6 +148,32 @@ function Get-AllServices {
     return $servicesMap
 }
 
+function Get-HnsPolicies {
+    $policies = @{}
+    $allHpcPods = Get-AllHpcPods
+    foreach ($pod in $allHpcPods.Keys) {
+        $policyJson = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | ConvertTo-Json -Depth 10"
+        $policies[$pod] = $policyJson | ConvertFrom-Json
+    }
+    Log -Message "HNS Policies collected from HPC Pods:" -InputObject $policies
+    return $policies
+}
+
+function Validate-HnsPolicy {
+    param(
+        [string]$SvcType
+    )
+    $services = $Global:allServices[$SvcType]
+    foreach ($HpcPodName in $Global:allHpcPods.Keys) {
+        $policies = $Global:hnsPolicies[$HpcPodName]
+        foreach ($service in $services) {
+            $matchingPolicy = $policies | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }
+            Log-Result -TestType $SvcType -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $service -IsSuccess ($null -ne $matchingPolicy) -cmd "N/A"
+        }
+    }
+    Write-Host "`n"
+}
+
 $Global:index = 0
 $Global:successTests = @()
 $Global:failedTests = @()
@@ -289,6 +315,7 @@ $Global:allHpcPods = Get-AllHpcPods
 $Global:allServices = Get-AllServices
 $Global:allServerPods = Get-AllServerPods
 $Global:allNodeIPs = Get-AllNodeIPs
+$Global:hnsPolicies = Get-HnsPolicies
 
 $Global:maxPodCountToTest = [Math]::Min($maxPodCountToCheck, $Global:allServerPods.Count)
 
@@ -334,22 +361,7 @@ if ($RunClusterIPTests) {
 
     Write-Host "`n"
 
-    foreach ($service in $Global:allServices[$SvcTypeClusterIP]) {
-
-        # Validate Policies in each node
-        foreach ($pod in $Global:allHpcPods.Keys) {
-            Log -Message "Validating ClusterIP policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
-            for($i = 1; $i -le 3; $i++) {
-                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
-                if ($ok -eq $true) { break }
-                Start-Sleep -Seconds 1
-            }
-            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
-        }
-
-    }
-
-    Write-Host "`n"
+    Validate-HnsPolicy -SvcType $SvcTypeClusterIP
 }
 
 if ($RunNodePortTests) {
@@ -401,20 +413,7 @@ if ($RunNodePortTests) {
 
     Write-Host "`n"
 
-    foreach ($service in $Global:allServices[$SvcTypeNodePort]) {
-        # Validate Policies in each node
-        foreach ($pod in $Global:allHpcPods.Keys) {
-            Log -Message "Validating NodePort policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
-            for($i = 1; $i -le 3; $i++) {
-                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
-                if ($ok -eq $true) { break }
-                Start-Sleep -Seconds 1
-            }
-            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
-        }
-    }
-
-    Write-Host "`n"
+    Validate-HnsPolicy -SvcType $SvcTypeNodePort
 }
 
 if ($RunLoadBalancerTests) {
@@ -465,20 +464,7 @@ if ($RunLoadBalancerTests) {
 
     Write-Host "`n"
 
-    foreach ($service in $Global:allServices[$SvcTypeLoadBalancer]) {
-        # Validate Policies in each node
-        foreach ($pod in $Global:allHpcPods.Keys) {
-            Log -Message "Validating Loadbalancer policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
-            for($i = 1; $i -le 3; $i++) {
-                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
-                if ($ok -eq $true) { break }
-                Start-Sleep -Seconds 1
-            }
-            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
-        }
-    }
-
-    Write-Host "`n"
+    Validate-HnsPolicy -SvcType $SvcTypeLoadBalancer
 }
 
 rm -Force $testLogsPath -ErrorAction SilentlyContinue
