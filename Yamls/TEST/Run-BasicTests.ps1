@@ -162,12 +162,17 @@ function Log-Result {
         [string]$Cmd
     )
     $Global:index++
+    if ($SourceType -eq $SourceTypePolicyCheck) {
+        $Direction = $SourceTypePolicyCheck
+    } else {
+        $Direction = "$SourceType->$TestType"
+    }
     if ($IsSuccess -eq $true) {
-        $msg = "[TEST-$($Global:index)][SUCCESS][$SourceType->$TestType][$($service.Name)]: Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
+        $msg = "[TEST-$($Global:index)][SUCCESS][$Direction][$($service.Name)]: Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
         Write-Host "`n$msg" -ForegroundColor Green
         $Global:successTests += $msg
     } else {
-        $msg =  "[TEST-$($Global:index)][FAILURE][$SourceType->$TestType][$($service.Name)]: Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) , Command: $Cmd"
+        $msg =  "[TEST-$($Global:index)][FAILURE][$Direction][$($service.Name)]: Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) , Command: $Cmd"
         Write-Host "`n$msg" -ForegroundColor Red
         $Global:failedTests += $msg
     }
