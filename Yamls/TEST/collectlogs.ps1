@@ -1,6 +1,6 @@
 mkdir logs -ErrorAction SilentlyContinue
 cd logs
-Rm -r -force *
+Rm -r -force * -ErrorAction SilentlyContinue
 cp C:\k\kubeproxy.err.log .
 cp C:\k\azure-vnet.log .
 Get-HnsNetwork | ConvertTo-Json -Depth 10 > network.txt
@@ -12,5 +12,5 @@ foreach ($port in $ports) {
 	vfpctrl /port $port /list-rule >> .\vfprules.txt
 }
 cd ..
-rm logs.zip
+rm logs.zip -ErrorAction SilentlyContinue
 Compress-archive logs\* logs.zip

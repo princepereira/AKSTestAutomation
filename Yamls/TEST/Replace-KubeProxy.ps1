@@ -27,6 +27,7 @@ foreach ($pod in $allHpcPods) {
     kubectl cp -n $namespace .\kubeproxy.zip $pod`:kubeproxy.zip
     Write-Host "Executing 'copykubeproxy.ps1' script in Pod: $pod" -ForegroundColor DarkYellow
     kubectl exec -n $namespace $pod -- powershell -Command ".\copykubeproxy.ps1"
+    Start-Sleep -Seconds 120
     Write-Host "Verifying KubeProxy service status in Pod: $pod" -ForegroundColor DarkYellow
     kubectl exec -n $namespace $pod -- powershell -Command "Get-Service KubeProxy"
     $podKubeProxyHash = kubectl exec -n $namespace $pod -- powershell -Command "(Get-FileHash -Path C:\k\kube-proxy.exe).Hash"

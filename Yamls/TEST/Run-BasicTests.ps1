@@ -165,10 +165,22 @@ function Validate-HnsPolicy {
     )
     $services = $Global:allServices[$SvcType]
     foreach ($HpcPodName in $Global:allHpcPods.Keys) {
-        $policies = $Global:hnsPolicies[$HpcPodName]
+        $hnsPolicies = $Global:hnsPolicies[$HpcPodName]
+        $policies = $hnsPolicies.Policies
         foreach ($service in $services) {
-            $matchingPolicy = $policies | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }
-            Log-Result -TestType $SvcType -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $service -IsSuccess ($null -ne $matchingPolicy) -cmd "N/A"
+            $matchCount = 0
+            foreach ($policy in $policies) {
+                if ($SvcType -Eq $SvcTypeNodePort) {
+                    if ($policy.ExternalPort -Eq $service.ExternalPort) {
+                        $matchCount++
+                    }
+                } else {
+                    if ($policy.ExternalPort -Eq $service.ExternalPort -and $policy.VIPs[0] -Eq $service.ExternalIP) {
+                        $matchCount++
+                    }
+                }
+            }
+            Log-Result -TestType $SvcType -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $service -IsSuccess ($matchCount -gt 0) -cmd "N/A"
         }
     }
     Write-Host "`n"
@@ -316,8 +328,6 @@ $Global:allServices = Get-AllServices
 $Global:allServerPods = Get-AllServerPods
 $Global:allNodeIPs = Get-AllNodeIPs
 $Global:hnsPolicies = Get-HnsPolicies
-
-$Global:maxPodCountToTest = [Math]::Min($maxPodCountToCheck, $Global:allServerPods.Count)
 
 Print-PodsAndServices
 
@@ -476,4 +486,3 @@ Log-PodsAndServices
 Log-TestSummary
 
 Print-TestSummary
-
