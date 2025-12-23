@@ -12,6 +12,11 @@ $SvcTypeClusterIP = "ClusterIP"
 $SvcTypeNodePort = "NodePort"
 $SvcTypeLoadBalancer = "LoadBalancer"
 
+$SourceTypePod = "Pod"
+$SourceTypeNode = "Node"
+$SourceTypeExternal = "External"
+$SourceTypePolicyCheck = "POLICY-CHECK"
+
 $printLogs = $false
 
 $ServiceInfo = [PSCustomObject]@{
@@ -297,7 +302,7 @@ if ($RunClusterIPTests) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
-            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType "Pod" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType $SourceTypePod -service $service -IsSuccess $ok -cmd $cmd
         }
         # Node to ClusterIP Tests
         foreach ($pod in $Global:allHpcPods.Keys) {
@@ -307,8 +312,26 @@ if ($RunClusterIPTests) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
-            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType "Node" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType $SourceTypeNode -service $service -IsSuccess $ok -cmd $cmd
         }
+
+    }
+
+    Write-Host "`n"
+
+    foreach ($service in $Global:allServices[$SvcTypeClusterIP]) {
+
+        # Validate Policies in each node
+        foreach ($pod in $Global:allHpcPods.Keys) {
+            Log -Message "Validating ClusterIP policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
+            for($i = 1; $i -le 3; $i++) {
+                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
+                if ($ok -eq $true) { break }
+                Start-Sleep -Seconds 1
+            }
+            Log-Result -TestType $SvcTypeClusterIP -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
+        }
+
     }
 
     Write-Host "`n"
@@ -340,7 +363,7 @@ if ($RunNodePortTests) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
-            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType "Pod" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType $SourceTypePod -service $service -IsSuccess $ok -cmd $cmd
         }
         # Node to NodePort Tests
         foreach ($pod in $Global:allHpcPods.Keys) {
@@ -356,7 +379,23 @@ if ($RunNodePortTests) {
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
             }
-            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType "Node" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType $SourceTypeNode -service $service -IsSuccess $ok -cmd $cmd
+        }
+
+    }
+
+    Write-Host "`n"
+
+    foreach ($service in $Global:allServices[$SvcTypeNodePort]) {
+        # Validate Policies in each node
+        foreach ($pod in $Global:allHpcPods.Keys) {
+            Log -Message "Validating NodePort policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
+            for($i = 1; $i -le 3; $i++) {
+                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
+                if ($ok -eq $true) { break }
+                Start-Sleep -Seconds 1
+            }
+            Log-Result -TestType $SvcTypeNodePort -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
         }
     }
 
@@ -385,7 +424,7 @@ if ($RunLoadBalancerTests) {
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
             }
-            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType "Pod" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType $SourceTypePod -service $service -IsSuccess $ok -cmd $cmd
         }
         # Node to IngressIP Tests
         foreach ($pod in $Global:allHpcPods.Keys) {
@@ -396,7 +435,7 @@ if ($RunLoadBalancerTests) {
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
             }
-            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType "Node" -service $service -IsSuccess $ok -cmd $cmd
+            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType $SourceTypeNode -service $service -IsSuccess $ok -cmd $cmd
         }
         # External to IngressIP Tests
         Log -Message "Testing LoadBalancer connectivity from External to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
@@ -406,7 +445,22 @@ if ($RunLoadBalancerTests) {
             if ($ok -eq $true) { break }
             Start-Sleep -Seconds 1
         }
-        Log-Result -TestType $SvcTypeLoadBalancer -Source "External" -SourceType "External" -service $service -IsSuccess $ok -cmd $cmd
+        Log-Result -TestType $SvcTypeLoadBalancer -Source "External" -SourceType $SourceTypeExternal -service $service -IsSuccess $ok -cmd $cmd
+    }
+
+    Write-Host "`n"
+
+    foreach ($service in $Global:allServices[$SvcTypeLoadBalancer]) {
+        # Validate Policies in each node
+        foreach ($pod in $Global:allHpcPods.Keys) {
+            Log -Message "Validating Loadbalancer policies from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
+            for($i = 1; $i -le 3; $i++) {
+                $ok = kubectl exec -n $namespace $pod -- powershell -Command "Get-HnsPolicyList | Where-Object { $_.Policies[0].ExternalPort -eq $($service.ExternalPort) -and $_.Policies[0].VIPs[0] -eq $($service.ExternalIP) }"
+                if ($ok -eq $true) { break }
+                Start-Sleep -Seconds 1
+            }
+            Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType $SourceTypePolicyCheck -service $service -IsSuccess $ok -cmd $cmd
+        }
     }
 
     Write-Host "`n"
