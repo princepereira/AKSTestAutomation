@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  namespace: demo
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hpc-ds-win
+  namespace: demo
+  labels:
+    app: hpc-ds-win
+spec:
+  selector:
+    matchLabels:
+      name: hpc-ds-win
+  template:
+    metadata:
+      labels:
+        name: hpc-ds-win
+    spec:
+      securityContext:
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: "NT AUTHORITY\\SYSTEM"
+      hostNetwork: true
+      containers:
+      - name: hpc-ds-win
+        image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+        command: ["powershell"]
+        args: ["while($true)", "{ Sleep 5000 }"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: kube-path
+            mountPath: C:\k
+      volumes:
+      - name: kube-path
+        hostPath:
+          path: C:\k
+      nodeSelector:
+        kubernetes.azure.com/os-sku: Windows2022

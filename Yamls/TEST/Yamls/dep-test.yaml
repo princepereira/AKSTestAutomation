@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-server
+  namespace: demo
+  labels:
+    app: tcp-server
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: tcp-server
+  template:
+    metadata:
+      labels:
+        app: tcp-server
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": windows
+      containers:
+        - name: tcp-server
+          image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+          ports:
+            - containerPort: 80
