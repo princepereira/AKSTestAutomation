@@ -1,7 +1,7 @@
 $namespace = "demo"
 $hpcDaemonsSet = "hpc-ds-win"
 $serverPodDeployment = "tcp-server"
-$maxPodCountToCheck = 5
+$retry = 2
 $testLogsPath = ".\ConnectivityLogs.txt"
 
 $RunClusterIPTests = $true
@@ -374,7 +374,7 @@ if ($RunClusterIPTests) {
             $nodeTested[$nodeNameFromPod] = $true
             Log -Message "Testing ClusterIP connectivity from Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
@@ -384,7 +384,7 @@ if ($RunClusterIPTests) {
         foreach ($pod in $Global:allHpcPods.Keys) {
             Log -Message "Testing ClusterIP connectivity from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
@@ -418,7 +418,7 @@ if ($RunNodePortTests) {
             $nodeTested[$nodeNameFromPod] = $true
             Log -Message "Testing NodePort connectivity from Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
             }
@@ -433,7 +433,7 @@ if ($RunNodePortTests) {
             }
             Log -Message "Testing NodePort connectivity from Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
@@ -463,7 +463,7 @@ if ($RunLoadBalancerTests) {
             $nodeTested[$nodeNameFromPod] = $true
             Log -Message "Testing LoadBalancer connectivity from Server Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
@@ -474,7 +474,7 @@ if ($RunLoadBalancerTests) {
         foreach ($pod in $Global:allHpcPods.Keys) {
             Log -Message "Testing LoadBalancer connectivity from HPC Pod: '$pod' to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
             $cmd = "kubectl exec -n $namespace $pod -- powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-            for($i = 1; $i -le 3; $i++) {
+            for($i = 1; $i -le $retry; $i++) {
                 $ok = kubectl exec -n $namespace $pod -- powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
                 if ($ok -eq $true) { break }
                 Start-Sleep -Seconds 1
@@ -482,9 +482,9 @@ if ($RunLoadBalancerTests) {
             Log-Result -TestType $SvcTypeLoadBalancer -Source $pod -SourceType $SourceTypeNode -service $service -IsSuccess $ok -cmd $cmd
         }
         # External to IngressIP Tests
-        Log -Message "Testing LoadBalancer connectivity from External to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -Color Yellow
+        Log -Message "Testing LoadBalancer connectivity from External to Service '$($service.Name)' at $($service.ExternalIP):$($service.ExternalPort)..." -ForegroundColor Yellow
         $cmd = "powershell -Command 'Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded'"
-        for($i = 1; $i -le 3; $i++) {
+        for($i = 1; $i -le $retry; $i++) {
             $ok = powershell -Command "Test-NetConnection $($service.ExternalIP) -Port $($service.ExternalPort) | Select-Object -ExpandProperty TcpTestSucceeded"
             if ($ok -eq $true) { break }
             Start-Sleep -Seconds 1
