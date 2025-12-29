@@ -49,6 +49,24 @@ function Log {
     }
 }
 
+function Get-IPAddressType {
+    param([string]$IPString)
+
+    $parsedIP = $null
+    # TryParse returns True if successful, False otherwise
+    $isValid = [System.Net.IPAddress]::TryParse($IPString, [ref]$parsedIP)
+
+    if ($isValid) {
+        if ($parsedIP.AddressFamily -eq 'InterNetwork') {
+            return "IPv4"
+        } elseif ($parsedIP.AddressFamily -eq 'InterNetworkV6') {
+            return "IPv6"
+        }
+    } else {
+        return "Invalid IP Address"
+    }
+}
+
 # Returns a map of HPC Pod Names to Node Names
 function Get-AllHpcPods {
     $items = (kubectl get pods -n $namespace -l name=$hpcDaemonsSet -o json | ConvertFrom-Json).items
@@ -105,6 +123,7 @@ function Get-AllServices {
         $nodePorts = $svc.spec.ports.nodePort
         $clusterIPS = $svc.spec.clusterIPs
         $ingressIps = $svc.status.loadBalancer.ingress
+        $ipFamilies = $svc.spec.ipFamilies
 
         # Constructing ClusterIP Services
         foreach ($clusterIP in $clusterIPS) {
@@ -122,6 +141,10 @@ function Get-AllServices {
         foreach ($nodePort in $nodePorts) {
             foreach ($externalPort in $externalPorts) {
                 foreach ($nodeIP in $allNodeIPs) {
+                    $ipAddrType = Get-IPAddressType -IPString $nodeIP
+                    if (($ipFamilies.Count -eq 1) -and ($ipFamilies[0] -ne $ipAddrType)) {
+                        continue
+                    }
                     $serviceInfo = [PSCustomObject]@{
                         Name         = $name
                         ExternalIP   = $nodeIP
