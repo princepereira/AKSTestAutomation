@@ -238,7 +238,7 @@ function Log-Result {
     if ($TestType -eq $SvcTypeKubeProxyErrorCheck) {
         $LogString = "[$SvcTypeKubeProxyErrorCheck]: $NodeName, Source: $Source, $cmd"
     } else {
-        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) `n       Command: [$Cmd]"
+        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
     }
     
     if ($IsSuccess -eq $true) {
@@ -246,6 +246,9 @@ function Log-Result {
         Write-Host "`n$msg" -ForegroundColor Green
         $Global:successTests += $msg
     } else {
+        if ($TestType -ne $SvcTypeKubeProxyErrorCheck) {
+            $LogString += " `n       Command: [$Cmd]"
+        }
         $msg =  "[TEST-$($Global:index)][FAILURE][$Direction]$LogString"
         Write-Host "`n$msg" -ForegroundColor Red
         $Global:failedTests += $msg
