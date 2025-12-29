@@ -27,8 +27,10 @@ foreach ($pod in $allHpcPods) {
     kubectl cp -n $namespace .\kubeproxy.zip $pod`:kubeproxy.zip
     Write-Host "Executing 'copykubeproxy.ps1' script in Pod: $pod" -ForegroundColor DarkYellow
     kubectl exec -n $namespace $pod -- powershell -Command ".\copykubeproxy.ps1"
+    Write-Host "Finished updating kube-proxy in Pod: $pod." -ForegroundColor Green
 }
 
+Write-Host "Waiting 90 seconds for Pods to restart and KubeProxy service to come online..." -ForegroundColor Yellow
 Start-Sleep -Seconds 90
 
 foreach ($pod in $allHpcPods) {
@@ -46,3 +48,5 @@ foreach ($pod in $allHpcPods) {
 }
 
 Write-Host "All HPC Pods updated with new kube-proxy version." -ForegroundColor Magenta
+
+kubectl get pods -n $namespace -o wide
