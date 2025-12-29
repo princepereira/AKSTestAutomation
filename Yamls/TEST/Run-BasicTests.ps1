@@ -266,15 +266,15 @@ function Print-PodsAndServices {
     $Global:allServerPods | Format-Table
     Write-Host "All ClusterIP Services" -ForegroundColor Cyan
     Write-Host "================================"
-    $Global:allServices.ClusterIP | Format-Table
+    $Global:allServices[$SvcTypeClusterIP] | Format-Table
     Write-Host "================================"
     Write-Host "All NodePort Services" -ForegroundColor Cyan
     Write-Host "================================"
-    $Global:allServices.NodePort | Format-Table
+    $Global:allServices[$SvcTypeNodePort] | Format-Table
     Write-Host "================================"
     Write-Host "All Loadbalancer Services" -ForegroundColor Cyan
     Write-Host "================================"
-    $Global:allServices.LoadBalancer | Format-Table
+    $Global:allServices[$SvcTypeLoadBalancer] | Format-Table
     Write-Host "================================"
 }
 
@@ -293,15 +293,15 @@ function Log-PodsAndServices {
     $Global:allServerPods | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "All ClusterIP Services" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
-    $Global:allServices.ClusterIP | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
+    $Global:allServices[$SvcTypeClusterIP] | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "All NodePort Services" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
-    $Global:allServices.NodePort | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
+    $Global:allServices[$SvcTypeNodePort] | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "All Loadbalancer Services" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
-    $Global:allServices.LoadBalancer | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
+    $Global:allServices[$SvcTypeLoadBalancer] | Format-Table | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
     Write-Output "================================" | Out-File -FilePath $testLogsPath -Encoding utf8 -Append
 }
 
