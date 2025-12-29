@@ -8,6 +8,4 @@ Stop-Service -Force KubeProxy
 Start-Sleep -Seconds 1
 rm C:\k\kubeproxy.err.log -ErrorAction SilentlyContinue
 Restart-Computer -Force
-Start-Sleep -Seconds 2
-Get-Service KubeProxy
 
