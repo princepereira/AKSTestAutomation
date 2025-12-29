@@ -195,11 +195,12 @@ function Validate-KubeProxyErrors {
         "endpoint was not found",
         "The specified port already exists"
     )
-    foreach ($HpcPodName in $Global:allHpcPods.Keys) {
+    $allHpcPods = Get-AllHpcPods
+    foreach ($pod in $allHpcPods.Keys) {
         $kubeProxyLogs = kubectl exec -n $namespace $pod -- powershell -Command "Get-Content C:\k\kubeproxy.err.log"
         foreach($err in $errors) {
             $errorCount = ($kubeProxyLogs | Select-String -Pattern $err).Count
-            Log-Result -TestType $SvcTypeKubeProxyErrorCheck -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $error -IsSuccess ($errorCount -eq 0) -cmd "Error Count: $errorCount"
+            Log-Result -TestType $SvcTypeKubeProxyErrorCheck -Source $pod -SourceType $SourceTypePolicyCheck -IsSuccess ($errorCount -eq 0) -cmd "Error: $err, Error Count: $errorCount"
         }
     }
     Write-Host "`n"
@@ -233,10 +234,11 @@ function Log-Result {
     } else {
         $NodeName = ""
     }
+
     if ($TestType -eq $SvcTypeKubeProxyErrorCheck) {
-        $LogString = "[$SvcTypeKubeProxyErrorCheck]: $NodeName, Error : $service"
+        $LogString = "[$SvcTypeKubeProxyErrorCheck]: $NodeName, Source: $Source, $cmd"
     } else {
-        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
+        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort),Command: $Cmd"
     }
     
     if ($IsSuccess -eq $true) {
@@ -244,7 +246,7 @@ function Log-Result {
         Write-Host "`n$msg" -ForegroundColor Green
         $Global:successTests += $msg
     } else {
-        $msg =  "[TEST-$($Global:index)][FAILURE][$Direction]$LogString , Command: $Cmd"
+        $msg =  "[TEST-$($Global:index)][FAILURE][$Direction]$LogString"
         Write-Host "`n$msg" -ForegroundColor Red
         $Global:failedTests += $msg
     }
