@@ -243,14 +243,14 @@ function Log-Result {
     
     if ($IsSuccess -eq $true) {
         $msg = "[TEST-$($Global:index)][SUCCESS][$Direction]$LogString"
-        Write-Host "`n$msg" -ForegroundColor Green
+        Write-Host "$msg" -ForegroundColor Green
         $Global:successTests += $msg
     } else {
         if ($TestType -ne $SvcTypeKubeProxyErrorCheck) {
             $LogString += " `n       Command: [$Cmd]"
         }
         $msg =  "[TEST-$($Global:index)][FAILURE][$Direction]$LogString"
-        Write-Host "`n$msg" -ForegroundColor Red
+        Write-Host "$msg" -ForegroundColor Red
         $Global:failedTests += $msg
     }
 }
