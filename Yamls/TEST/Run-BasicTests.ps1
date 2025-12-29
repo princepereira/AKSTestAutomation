@@ -192,13 +192,14 @@ function Validate-KubeProxyErrors {
     $errors = @(
         "IP address is either invalid",
         "network was not found",
-        "endpoint was not found"
+        "endpoint was not found",
+        "The specified port already exists"
     )
     foreach ($HpcPodName in $Global:allHpcPods.Keys) {
         $kubeProxyLogs = kubectl exec -n $namespace $pod -- powershell -Command "Get-Content C:\k\kubeproxy.err.log"
         foreach($err in $errors) {
             $errorCount = ($kubeProxyLogs | Select-String -Pattern $err).Count
-            Log-Result -TestType $SvcTypeKubeProxyErrorCheck -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $error -IsSuccess ($errorCount -eq 0) -cmd "N/A"
+            Log-Result -TestType $SvcTypeKubeProxyErrorCheck -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $error -IsSuccess ($errorCount -eq 0) -cmd "Error Count: $errorCount"
         }
     }
     Write-Host "`n"
@@ -232,13 +233,18 @@ function Log-Result {
     } else {
         $NodeName = ""
     }
+    if ($TestType -eq $SvcTypeKubeProxyErrorCheck) {
+        $LogString = "[$SvcTypeKubeProxyErrorCheck]: $NodeName, Error : $service"
+    } else {
+        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
+    }
     
     if ($IsSuccess -eq $true) {
-        $msg = "[TEST-$($Global:index)][SUCCESS][$Direction][$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort)"
+        $msg = "[TEST-$($Global:index)][SUCCESS][$Direction]$LogString"
         Write-Host "`n$msg" -ForegroundColor Green
         $Global:successTests += $msg
     } else {
-        $msg =  "[TEST-$($Global:index)][FAILURE][$Direction][$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) , Command: $Cmd"
+        $msg =  "[TEST-$($Global:index)][FAILURE][$Direction]$LogString , Command: $Cmd"
         Write-Host "`n$msg" -ForegroundColor Red
         $Global:failedTests += $msg
     }
