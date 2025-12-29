@@ -9,9 +9,10 @@ $RunNodePortTests = $true
 $RunLoadBalancerTests = $true
 $RunPolicyValidation = $true
 
-$SvcTypeClusterIP = "ClusterIP"
-$SvcTypeNodePort = "NodePort"
-$SvcTypeLoadBalancer = "LoadBalancer"
+$SvcTypeClusterIP = "CLUSTER-IP"
+$SvcTypeNodePort = "NODE-PORT"
+$SvcTypeLoadBalancer = "LOAD-BALANCER"
+$SvcTypeKubeProxyErrorCheck = "KUBE-PROXY-ERROR-CHECK"
 
 $SourceTypePod = "Pod"
 $SourceTypeNode = "Node"
@@ -182,6 +183,22 @@ function Validate-HnsPolicy {
                 }
             }
             Log-Result -TestType $SvcType -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $service -IsSuccess ($matchCount -gt 0) -cmd "N/A"
+        }
+    }
+    Write-Host "`n"
+}
+
+function Validate-KubeProxyErrors {
+    $errors = @(
+        "IP address is either invalid",
+        "network was not found",
+        "endpoint was not found"
+    )
+    foreach ($HpcPodName in $Global:allHpcPods.Keys) {
+        $kubeProxyLogs = kubectl exec -n $namespace $pod -- powershell -Command "Get-Content C:\k\kubeproxy.err.log"
+        foreach($err in $errors) {
+            $errorCount = ($kubeProxyLogs | Select-String -Pattern $err).Count
+            Log-Result -TestType $SvcTypeKubeProxyErrorCheck -Source $HpcPodName -SourceType $SourceTypePolicyCheck -service $error -IsSuccess ($errorCount -eq 0) -cmd "N/A"
         }
     }
     Write-Host "`n"
@@ -478,6 +495,7 @@ if ($RunPolicyValidation) {
     Validate-HnsPolicy -SvcType $SvcTypeClusterIP
     Validate-HnsPolicy -SvcType $SvcTypeNodePort
     Validate-HnsPolicy -SvcType $SvcTypeLoadBalancer
+    Validate-KubeProxyErrors
 }
 
 rm -Force $testLogsPath -ErrorAction SilentlyContinue
