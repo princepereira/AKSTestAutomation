@@ -7,6 +7,7 @@ $testLogsPath = ".\ConnectivityLogs.txt"
 $RunClusterIPTests = $true
 $RunNodePortTests = $true
 $RunLoadBalancerTests = $true
+$RunPolicyValidation = $true
 
 $SvcTypeClusterIP = "ClusterIP"
 $SvcTypeNodePort = "NodePort"
@@ -370,8 +371,6 @@ if ($RunClusterIPTests) {
     }
 
     Write-Host "`n"
-
-    Validate-HnsPolicy -SvcType $SvcTypeClusterIP
 }
 
 if ($RunNodePortTests) {
@@ -422,8 +421,6 @@ if ($RunNodePortTests) {
     }
 
     Write-Host "`n"
-
-    Validate-HnsPolicy -SvcType $SvcTypeNodePort
 }
 
 if ($RunLoadBalancerTests) {
@@ -473,7 +470,13 @@ if ($RunLoadBalancerTests) {
     }
 
     Write-Host "`n"
+}
 
+if ($RunPolicyValidation) {
+    Write-Host "`nRunning HNS Policy Validation Tests..." -ForegroundColor Cyan
+    Write-Host "`n"
+    Validate-HnsPolicy -SvcType $SvcTypeClusterIP
+    Validate-HnsPolicy -SvcType $SvcTypeNodePort
     Validate-HnsPolicy -SvcType $SvcTypeLoadBalancer
 }
 
