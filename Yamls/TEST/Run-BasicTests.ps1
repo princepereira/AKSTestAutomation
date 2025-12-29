@@ -238,7 +238,7 @@ function Log-Result {
     if ($TestType -eq $SvcTypeKubeProxyErrorCheck) {
         $LogString = "[$SvcTypeKubeProxyErrorCheck]: $NodeName, Source: $Source, $cmd"
     } else {
-        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) `n          Command: [$Cmd]"
+        $LogString = "[$($service.Name)]: $NodeName, Source: $Source, TargetIP: $($service.ExternalIP), TargetPort: $($service.ExternalPort) `n       Command: [$Cmd]"
     }
     
     if ($IsSuccess -eq $true) {
